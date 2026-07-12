@@ -15,13 +15,15 @@ Applied through a safe, reversible patch — one command, any platform.
 
 </div>
 
+</div>
+
 <br>
 
 <p align="center">
   <img
     src="https://github.com/user-attachments/assets/1047578f-c2cc-4309-9c64-e9d0663c4006"
     alt="Vivaldi Swift Hero"
-    style="max-width: 400px; width: 100%;"
+    width="850"
   />
 </p>
 
