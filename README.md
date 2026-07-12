@@ -31,24 +31,7 @@ Applied to Vivaldi through a safe, reversible patch — one command, any platfor
 
 <br>
 
-## Contents
-
-- [Installation](#installation)
-- [Preview](#preview)
-- [Features](#features)
-- [Vivaldi Swift vs. Stock Vivaldi](#vivaldi-swift-vs-stock-vivaldi)
-- [Why Vivaldi Swift Exists](#why-vivaldi-swift-exists)
-- [Repository Structure](#repository-structure)
-- [Documentation](#documentation)
-- [Custom Icons](#custom-icons)
-- [Updating](#updating)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [License](#license)
-
-<br>
-
-## Installation
+# Installation
 
 Requires an existing install of [Vivaldi](https://vivaldi.com/download/) (stable or snapshot), version 6.0 or later.
 
@@ -57,7 +40,7 @@ Requires an existing install of [Vivaldi](https://vivaldi.com/download/) (stable
 <tr><td>
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/GITHUB_USERNAME/vivaldi-swift/main/install/bootstrap.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/Utkarsh-tiwari27/Vivaldi-Swift/main/install/bootstrap.sh)
 ```
 
 </td></tr>
@@ -65,7 +48,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/GITHUB_USERNAME/vivaldi-swif
 <tr><td>
 
 ```powershell
-irm https://raw.githubusercontent.com/GITHUB_USERNAME/vivaldi-swift/main/install/bootstrap.ps1 | iex
+irm https://raw.githubusercontent.com/Utkarsh-tiwari27/Vivaldi-Swift/main/install/bootstrap.ps1 | iex
 ```
 
 </td></tr>
@@ -85,7 +68,7 @@ Prefer to inspect the code first, need installer flags like `--no-auto-patch`, o
 
 ```bash
 # Linux
-git clone https://github.com/GITHUB_USERNAME/vivaldi-swift.git
+git clone https://github.com/Utkarsh-tiwari27/Vivaldi-Swift.git
 cd vivaldi-swift
 ./install/install-linux.sh
 
@@ -95,7 +78,7 @@ cd vivaldi-swift
 
 ```powershell
 # Windows (Administrator PowerShell recommended)
-git clone https://github.com/GITHUB_USERNAME/vivaldi-swift.git
+git clone https://github.com/Utkarsh-tiwari27/Vivaldi-Swift.git
 cd vivaldi-swift
 .\install\install-windows.ps1
 ```
@@ -108,17 +91,6 @@ cd vivaldi-swift
 
 <!-- Screenshot placeholders — replace before publishing -->
 
-| Toolbar & Address Bar | Speed Dial |
-|:---:|:---:|
-| ![Toolbar](screenshots/toolbar.png) | ![Speed Dial](screenshots/speed-dial.png) |
-
-| Side Panel | Tab Bar |
-|:---:|:---:|
-| ![Panel](screenshots/panel.png) | ![Tab bar](screenshots/tab-bar.png) |
-
-| Speed Dial Icon Editor |
-|:---:|
-| ![Icon editor](screenshots/icon-editor.png) |
 
 <br>
 
@@ -155,71 +127,10 @@ Every patch run backs up `window.html` first and verifies the result. If anythin
 
 **Also included:** an in-app icon library (toolbar, sidebar, and social sets), a self-updater that checks `version.json` before downloading anything, full uninstall scripts that restore your original UI, and a documentation set covering every part of the system.
 
-<br>
-
-## Vivaldi Swift vs. Stock Vivaldi
-
-| | Stock Vivaldi | Vivaldi Swift |
-|---|:---:|:---:|
-| Toolbar & panel styling | Default Chromium chrome | Unified glass material system |
-| Speed Dial | Static favicons | Custom SVG/PNG icons, live resize & reposition |
-| Design consistency | Per-surface defaults | Shared visual language across toolbar, dropdowns, panel, and tabs |
-| Install method | N/A | One-line bootstrap installer |
-| Survives Vivaldi updates | — | Automatic, scheduled patch reapplication |
-| Cross-platform support | Linux · macOS · Windows | Linux · macOS · Windows |
-| Reversible | — | Full uninstaller restores original `window.html` |
-| Documentation | Official docs | [Dedicated docs](#documentation) for architecture, icons, updates, and troubleshooting |
 
 <br>
 
-## Why Vivaldi Swift Exists
 
-Vivaldi's interface is already one of the most customizable in any browser — but customization is usually additive: a theme here, a CSS snippet there. Vivaldi Swift instead treats the toolbar, dropdowns, Speed Dial, panel, and tab bar as one interconnected surface, and redesigns them together.
-
-That's the actual goal: not a glass *effect*, but glass used consistently — the same materials, spacing, and motion language applied everywhere the browser draws its own UI, so nothing feels bolted on.
-
-<br>
-
-## Repository Structure
-
-```
-vivaldi-swift/
-├── css/
-│   └── vivaldi_swift.css     Production stylesheet (single-file, module sections)
-├── js/
-│   └── custom.js             Speed Dial custom-icon framework
-├── icons/
-│   ├── toolbar/               Icons matching the toolbar/address bar style
-│   ├── sidebar/                Icons for the side panel
-│   ├── social/                 Common social/site icons for Speed Dial tiles
-│   └── custom/                 User-contributed or project-specific icons
-├── install/
-│   ├── bootstrap.sh / bootstrap.ps1        One-line installers
-│   ├── install-{linux,macos,windows}.*     Platform installers
-│   ├── update-{linux,macos,windows}.*      Self-updaters
-│   ├── uninstall-{linux,macos,windows}.*   Uninstallers
-│   └── patch/                              Per-OS patch engines
-├── docs/                       Installation, architecture, icons, FAQ, troubleshooting, updates
-├── screenshots/                Repository preview images
-├── version.json                Version metadata read by the updater
-└── README.md
-```
-
-<br>
-
-## Documentation
-
-| Guide | Covers |
-|---|---|
-| [Installation](docs/installation.md) | Requirements, per-OS install steps, verifying, updating, uninstalling |
-| [Architecture](docs/architecture.md) | Why patching is necessary, CSS module layout, the `custom.js` framework, injection hierarchy |
-| [Icons](docs/icons.md) | Supported formats, recommended sizes, folder structure, icon sources |
-| [Update System](docs/update-system.md) | How automatic reapplication works, manual reapplication, the self-updater |
-| [Troubleshooting](docs/troubleshooting.md) | Common install/patch problems, organized by symptom |
-| [FAQ](docs/faq.md) | Safety, performance, snapshot builds, and other common questions |
-| [License](LICENSE) | MIT |
-
-<br>
 
 ## Custom Icons
 
