@@ -24,7 +24,7 @@ Refined spacing, glass surfaces, and motion that feels native — through a safe
   <img
     src="https://github.com/user-attachments/assets/6300d09f-cc61-4149-9870-3c789e883129"
     alt="Vivaldi Swift Hero"
-    width="760"
+    width="500"
   />
 </p>
 
