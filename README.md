@@ -17,13 +17,15 @@ Applied through a safe, reversible patch — one command, any platform.
 
 <br>
 
-<!-- Hero GIF -->
-<img width="400" height="230" alt="hero" src="https://github.com/user-attachments/assets/375694f9-216c-4768-9ad2-b2e6a7cb74dc" />
-
-
+<p align="center">
+  <img
+    src="https://github.com/user-attachments/assets/1047578f-c2cc-4309-9c64-e9d0663c4006"
+    alt="Vivaldi Swift Hero"
+    width="400"
+  />
+</p>
 
 <br>
-
 ## Preview
 
 <!-- Browser Screenshot -->
