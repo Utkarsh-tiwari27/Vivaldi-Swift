@@ -22,26 +22,35 @@ Applied through a safe, reversible patch — one command, any platform.
     width="400"
   />
 </p>
-## screenshot
 
-<!-- Browser Screenshot -->
+## Screenshots
 
+<table align="center">
+<tr>
+<td align="center">
 
+<img
+src="https://github.com/user-attachments/assets/eb892458-3671-48e7-8064-c36609c62e05"
+alt="Vivaldi Swift Browser"
+width="500">
 
+</td>
 
-</div>
+<td align="center">
 
-<p align="center">
-  <img
-    src="https://github.com/user-attachments/assets/eb892458-3671-48e7-8064-c36609c62e05"
-    alt="Vivaldi Swift browser screenshot"
-    width="800"
-  />
-</p>
+<img
+src="https://github.com/user-attachments/assets/2287183f-f30b-47cc-b1fd-9af20c1f3a59"
+alt="Vivaldi Swift Speed Dial"
+width="500">
 
+</td>
+</tr>
 
-
-<br>
+<tr>
+<td align="center"><sub>Browser UI</sub></td>
+<td align="center"><sub>Speed Dial</sub></td>
+</tr>
+</table>
 
 ## Installation
 
