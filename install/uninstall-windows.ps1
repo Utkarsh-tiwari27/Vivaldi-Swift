@@ -28,17 +28,18 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$LibDir = Join-Path $ScriptDir "lib"
+if (-not (Test-Path (Join-Path $LibDir "common.ps1"))) {
+    $LibDir = $ScriptDir   # installed layout: bin\uninstall-windows.ps1, bin\lib\common.ps1
+}
+. (Join-Path $LibDir "common.ps1")
+
 $ModDir   = "$env:USERPROFILE\Vivaldi-Swift"
-$TaskName = "VivaldiSwiftPatch"
+$TaskName = "VivaldiSwiftAutoUpdate"
+$LegacyTaskName = "VivaldiSwiftPatch"
 
-function Info { param($m) Write-Host "-> $m" }
-function Ok   { param($m) Write-Host "OK $m" -ForegroundColor Green }
-function Warn { param($m) Write-Host "!  $m" -ForegroundColor Yellow }
-
-Write-Host "======================================"
-Write-Host " Vivaldi Swift - Windows Uninstaller"
-Write-Host "======================================"
-Write-Host ""
+Write-Banner "Vivaldi Swift - Windows Uninstaller"
 
 # ------------------------------------------------------------------------
 # 1. Locate Vivaldi and restore window.html
@@ -85,7 +86,7 @@ if (-not $VivaldiDir) {
             Warn "Could not clean window.html: $($_.Exception.Message)"
         }
     } else {
-        Info "Restoring window.html from $($latestBackup.FullName)"
+        Step "Restoring window.html from $($latestBackup.FullName)"
         try {
             Copy-Item -Path $latestBackup.FullName -Destination $windowHtml -Force
             Ok "Restored $windowHtml"
@@ -99,14 +100,15 @@ if (-not $VivaldiDir) {
 }
 
 # ------------------------------------------------------------------------
-# 2. Remove Task Scheduler task
+# 2. Remove the scheduled task (current and legacy name)
 # ------------------------------------------------------------------------
-Info "Removing scheduled task..."
+Step "Removing auto-update service..."
 try {
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
-    Ok "Scheduled task removed."
+    Unregister-ScheduledTask -TaskName $LegacyTaskName -Confirm:$false -ErrorAction SilentlyContinue
+    Ok "Auto-update service removed."
 } catch {
-    Warn "Could not remove scheduled task (it may not exist)."
+    Warn "Could not remove the scheduled task (it may not exist)."
 }
 
 # ------------------------------------------------------------------------
@@ -117,7 +119,7 @@ if ($Purge) {
     if (-not $Yes) {
         $answer = Read-Host "Delete $ModDir entirely, including logs and backups? [y/N]"
         if ($answer -notmatch '^[Yy]') {
-            Info "Skipping directory removal."
+            Step "Skipping directory removal."
             $doPurge = $false
         }
     }
@@ -126,7 +128,7 @@ if ($Purge) {
         Ok "Removed $ModDir"
     }
 } else {
-    Info "$ModDir left in place (logs/backups preserved). Use -Purge to remove it."
+    Step "$ModDir left in place (logs/backups preserved). Use -Purge to remove it."
 }
 
 Write-Host ""

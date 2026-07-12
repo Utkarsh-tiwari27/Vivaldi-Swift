@@ -11,9 +11,16 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="$SCRIPT_DIR/lib"
+[ -f "$LIB_DIR/common.sh" ] || LIB_DIR="$SCRIPT_DIR"   # installed layout: bin/uninstall-macos.sh, bin/lib/common.sh
+# shellcheck source=SCRIPTDIR/lib/common.sh
+source "$LIB_DIR/common.sh"
+
 MOD_DIR="$HOME/Vivaldi-Swift"
-PLIST_LABEL="com.vivaldiswift.patch"
+PLIST_LABEL="com.vivaldiswift.autoupdate"
 PLIST_PATH="$HOME/Library/LaunchAgents/$PLIST_LABEL.plist"
+LEGACY_PLIST_PATH="$HOME/Library/LaunchAgents/com.vivaldiswift.patch.plist"
 ASSUME_YES=0
 PURGE=0
 
@@ -39,14 +46,7 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-info()  { echo "→ $*"; }
-ok()    { echo "✓ $*"; }
-warn()  { echo "! $*"; }
-
-echo "======================================"
-echo " Vivaldi Swift — macOS Uninstaller"
-echo "======================================"
-echo
+banner "Vivaldi Swift — macOS Uninstaller"
 
 # ----------------------------------------------------------------------------
 # 1. Locate Vivaldi.app
@@ -75,7 +75,7 @@ else
             -e 's#<script src="custom.js"></script>##' \
             "$vivaldi_dir/window.html" 2>/dev/null || warn "Could not clean window.html"
     else
-        info "Restoring window.html from $latest_backup"
+        step "Restoring window.html from $latest_backup"
         if $SUDO cp "$latest_backup" "$vivaldi_dir/window.html"; then
             ok "Restored $vivaldi_dir/window.html"
         else
@@ -92,12 +92,13 @@ else
 fi
 
 # ----------------------------------------------------------------------------
-# 2. Remove LaunchAgent
+# 2. Remove the LaunchAgent (current and legacy label)
 # ----------------------------------------------------------------------------
-info "Removing LaunchAgent..."
+step "Removing auto-update service..."
 launchctl unload "$PLIST_PATH" >/dev/null 2>&1 || true
-rm -f "$PLIST_PATH"
-ok "LaunchAgent removed."
+launchctl unload "$LEGACY_PLIST_PATH" >/dev/null 2>&1 || true
+rm -f "$PLIST_PATH" "$LEGACY_PLIST_PATH"
+ok "Auto-update service removed."
 
 # ----------------------------------------------------------------------------
 # 3. Optionally purge the install directory
@@ -105,14 +106,14 @@ ok "LaunchAgent removed."
 if [ "$PURGE" -eq 1 ]; then
     if [ "$ASSUME_YES" -eq 0 ]; then
         read -rp "Delete $MOD_DIR entirely, including logs and backups? [y/N] " answer
-        [[ "${answer,,}" == "y" ]] || { info "Skipping directory removal."; PURGE=0; }
+        [[ "${answer,,}" == "y" ]] || { step "Skipping directory removal."; PURGE=0; }
     fi
     if [ "$PURGE" -eq 1 ]; then
         rm -rf "$MOD_DIR"
         ok "Removed $MOD_DIR"
     fi
 else
-    info "$MOD_DIR left in place (logs/backups preserved). Use --purge to remove it."
+    step "$MOD_DIR left in place (logs/backups preserved). Use --purge to remove it."
 fi
 
 echo

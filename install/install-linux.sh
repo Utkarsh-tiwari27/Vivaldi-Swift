@@ -4,8 +4,8 @@
 # ----------------------------------------------------------------------------
 # Sets up ~/Vivaldi-Swift, copies the CSS/JS payload and patch engine into
 # it, applies the patch to a detected Vivaldi installation, and installs a
-# systemd user service (falling back to cron) that keeps the mod re-applied
-# after Vivaldi auto-updates.
+# systemd user timer (cron fallback) that keeps Vivaldi Swift patched and
+# quietly up to date on its own — no manual update command required.
 #
 # Usage:
 #   ./install-linux.sh [--yes] [--no-auto-patch]
@@ -15,10 +15,12 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# shellcheck source=SCRIPTDIR/lib/common.sh
+source "$SCRIPT_DIR/lib/common.sh"
 
 MOD_DIR="$HOME/Vivaldi-Swift"
 ASSUME_YES=0
-INSTALL_AUTO_PATCH=1
+INSTALL_AUTO_UPDATE=1
 
 usage() {
     cat <<EOF
@@ -28,7 +30,7 @@ Usage: $(basename "$0") [options]
 
 Options:
   --yes              Non-interactive mode (auto-confirm all prompts)
-  --no-auto-patch     Skip installing the systemd/cron auto-reapply service
+  --no-auto-patch     Skip installing the systemd/cron auto-update service
   -h, --help          Show this help text
 EOF
 }
@@ -36,30 +38,13 @@ EOF
 while [ $# -gt 0 ]; do
     case "$1" in
         --yes) ASSUME_YES=1; shift ;;
-        --no-auto-patch) INSTALL_AUTO_PATCH=0; shift ;;
+        --no-auto-patch) INSTALL_AUTO_UPDATE=0; shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
     esac
 done
 
-info()  { echo "  $*"; }
-ok()    { echo "${C_GREEN}✓${C_RESET} $*"; }
-warn()  { echo "${C_YELLOW}!${C_RESET} $*"; }
-fail()  { echo "${C_RED}✗${C_RESET} $*" >&2; exit 1; }
-
-# Color support: only when writing to a real terminal that isn't "dumb"
-# and the user hasn't opted out via NO_COLOR (https://no-color.org/).
-if [ -t 1 ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-dumb}" != "dumb" ]; then
-    C_GREEN=$'\033[32m'; C_RED=$'\033[31m'; C_YELLOW=$'\033[33m'; C_BOLD=$'\033[1m'; C_RESET=$'\033[0m'
-else
-    C_GREEN=""; C_RED=""; C_YELLOW=""; C_BOLD=""; C_RESET=""
-fi
-
-HR="──────────────────────────────"
-
-echo "$HR"
-echo " ${C_BOLD}Vivaldi Swift Installer${C_RESET}"
-echo "$HR"
+banner "Vivaldi Swift Installer"
 
 # ----------------------------------------------------------------------------
 # 1. Detect distro (informational, used only for messaging/logging)
@@ -70,7 +55,7 @@ if [ -f /etc/os-release ]; then
     DISTRO="$(. /etc/os-release && echo "${PRETTY_NAME:-$ID}")"
 fi
 ok "Detecting operating system"
-info "$DISTRO"
+step "$DISTRO"
 
 # ----------------------------------------------------------------------------
 # 2. Detect Vivaldi
@@ -92,9 +77,9 @@ ok "Detecting Vivaldi installation"
 # ----------------------------------------------------------------------------
 # 3. Create the Vivaldi-Swift directory layout
 # ----------------------------------------------------------------------------
-mkdir -p "$MOD_DIR"/{css,js,icons,backups,logs,bin}
+mkdir -p "$MOD_DIR"/{css,js,icons,backups,logs,bin/lib}
 ok "Creating directories"
-info "$MOD_DIR"
+step "$MOD_DIR"
 
 # ----------------------------------------------------------------------------
 # 4. Copy payload files
@@ -108,40 +93,47 @@ ok "Installing JavaScript"
 if [ -d "$REPO_ROOT/icons" ]; then
     cp -rf "$REPO_ROOT/icons/." "$MOD_DIR/icons/" 2>/dev/null || true
 fi
-[ -f "$REPO_ROOT/version.json" ] && cp -f "$REPO_ROOT/version.json" "$MOD_DIR/version.json"
 
 # ----------------------------------------------------------------------------
-# 5. Install the patch service: copy the patch engine into $MOD_DIR/bin and
-#    register the background job that keeps it reapplied after Vivaldi
-#    updates (systemd user timer, cron fallback).
+# 5. Install the patch engine + auto-updater into $MOD_DIR/bin, and record
+#    which repository snapshot this install came from.
 # ----------------------------------------------------------------------------
+cp -f "$SCRIPT_DIR/lib/common.sh" "$MOD_DIR/bin/lib/common.sh"
 cp -f "$SCRIPT_DIR/patch/patch-linux.sh" "$MOD_DIR/bin/patch-linux.sh"
-chmod +x "$MOD_DIR/bin/patch-linux.sh"
-cp -f "$SCRIPT_DIR/uninstall-linux.sh" "$MOD_DIR/bin/uninstall-linux.sh" 2>/dev/null || true
-chmod +x "$MOD_DIR/bin/uninstall-linux.sh" 2>/dev/null || true
-[ -f "$SCRIPT_DIR/update-linux.sh" ] && { cp -f "$SCRIPT_DIR/update-linux.sh" "$MOD_DIR/bin/update-linux.sh"; chmod +x "$MOD_DIR/bin/update-linux.sh"; }
+cp -f "$SCRIPT_DIR/update-linux.sh" "$MOD_DIR/bin/update-linux.sh"
+cp -f "$SCRIPT_DIR/uninstall-linux.sh" "$MOD_DIR/bin/uninstall-linux.sh"
+chmod +x "$MOD_DIR/bin/patch-linux.sh" "$MOD_DIR/bin/update-linux.sh" "$MOD_DIR/bin/uninstall-linux.sh"
 
-if [ "$INSTALL_AUTO_PATCH" -eq 1 ]; then
+if sha="$(remote_repo_sha)" && [ -n "$sha" ]; then
+    echo "$sha" > "$MOD_DIR/.repo-sha"
+fi
+
+# ----------------------------------------------------------------------------
+# 6. Register the background auto-update service. It reapplies the patch
+#    and quietly syncs new repository changes on its own — there is no
+#    manual update command.
+# ----------------------------------------------------------------------------
+if [ "$INSTALL_AUTO_UPDATE" -eq 1 ]; then
     if command -v systemctl >/dev/null 2>&1 && systemctl --user status >/dev/null 2>&1; then
         UNIT_DIR="$HOME/.config/systemd/user"
         mkdir -p "$UNIT_DIR"
 
         cat > "$UNIT_DIR/vivaldi-swift.service" <<EOF
 [Unit]
-Description=Vivaldi Swift patch reapplication
+Description=Vivaldi Swift automatic update and patch reapplication
 
 [Service]
 Type=oneshot
-ExecStart=$MOD_DIR/bin/patch-linux.sh --yes --quiet
+ExecStart=$MOD_DIR/bin/update-linux.sh --quiet
 EOF
 
         cat > "$UNIT_DIR/vivaldi-swift.timer" <<EOF
 [Unit]
-Description=Periodically reapply Vivaldi Swift after Vivaldi updates
+Description=Daily Vivaldi Swift update check (also catches up at login if overdue)
 
 [Timer]
 OnBootSec=2min
-OnUnitActiveSec=6h
+OnUnitActiveSec=24h
 Persistent=true
 
 [Install]
@@ -152,24 +144,25 @@ EOF
         systemctl --user enable --now vivaldi-swift.timer >/dev/null 2>&1 || \
             warn "Could not enable the systemd timer automatically. Run: systemctl --user enable --now vivaldi-swift.timer"
 
-        ok "Installing patch service"
-        info "systemd user timer (runs every 6h and at login)"
+        ok "Installing auto-update service"
+        step "systemd user timer (runs daily, catches up at login if overdue)"
     elif command -v crontab >/dev/null 2>&1; then
-        CRON_LINE="0 */6 * * * $MOD_DIR/bin/patch-linux.sh --yes --quiet"
-        ( crontab -l 2>/dev/null | grep -vF "$MOD_DIR/bin/patch-linux.sh" ; echo "$CRON_LINE" ) | crontab -
-        ok "Installing patch service"
-        info "cron fallback (runs every 6h)"
+        CRON_LINE="@reboot sleep 120 && $MOD_DIR/bin/update-linux.sh --quiet"
+        CRON_LINE_DAILY="0 9 * * * $MOD_DIR/bin/update-linux.sh --quiet"
+        ( crontab -l 2>/dev/null | grep -vF "$MOD_DIR/bin/update-linux.sh" ; echo "$CRON_LINE" ; echo "$CRON_LINE_DAILY" ) | crontab -
+        ok "Installing auto-update service"
+        step "cron fallback (runs daily and at boot)"
     else
-        ok "Installing patch service"
-        warn "Neither systemd --user nor cron is available. Re-run $MOD_DIR/bin/patch-linux.sh manually after Vivaldi updates."
+        ok "Installing auto-update service"
+        warn "Neither systemd --user nor cron is available. Vivaldi Swift will not update itself; re-run $MOD_DIR/bin/update-linux.sh manually to check for changes."
     fi
 else
-    ok "Installing patch service"
-    info "auto-reapply skipped (--no-auto-patch)"
+    ok "Installing auto-update service"
+    step "auto-update skipped (--no-auto-patch)"
 fi
 
 # ----------------------------------------------------------------------------
-# 6. Apply the patch (backs up window.html, injects CSS/JS, then verifies —
+# 7. Apply the patch (backs up window.html, injects CSS/JS, then verifies —
 #    automatically rolling back if verification fails)
 # ----------------------------------------------------------------------------
 PATCH_ARGS=("--mod-dir" "$MOD_DIR")
@@ -205,4 +198,5 @@ echo
 echo "  Logs    : $MOD_DIR/logs/"
 echo "  Backups : $MOD_DIR/backups/"
 echo
+echo "Vivaldi Swift updates itself automatically — nothing else to run."
 echo "To uninstall, run: install/uninstall-linux.sh"

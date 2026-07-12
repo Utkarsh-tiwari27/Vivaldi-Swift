@@ -4,7 +4,8 @@
 # ----------------------------------------------------------------------------
 # Sets up ~/Vivaldi-Swift, copies the CSS/JS payload and patch engine into
 # it, applies the patch to a detected Vivaldi.app, and installs a
-# LaunchAgent that keeps the mod re-applied after Vivaldi auto-updates.
+# LaunchAgent that keeps Vivaldi Swift patched and quietly up to date on
+# its own — no manual update command required.
 #
 # Usage:
 #   ./install-macos.sh [--yes] [--no-auto-patch]
@@ -14,11 +15,13 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# shellcheck source=SCRIPTDIR/lib/common.sh
+source "$SCRIPT_DIR/lib/common.sh"
 
 MOD_DIR="$HOME/Vivaldi-Swift"
 ASSUME_YES=0
-INSTALL_AUTO_PATCH=1
-PLIST_LABEL="com.vivaldiswift.patch"
+INSTALL_AUTO_UPDATE=1
+PLIST_LABEL="com.vivaldiswift.autoupdate"
 PLIST_PATH="$HOME/Library/LaunchAgents/$PLIST_LABEL.plist"
 
 usage() {
@@ -29,7 +32,7 @@ Usage: $(basename "$0") [options]
 
 Options:
   --yes              Non-interactive mode (auto-confirm all prompts)
-  --no-auto-patch     Skip installing the LaunchAgent auto-reapply job
+  --no-auto-patch     Skip installing the LaunchAgent auto-update job
   -h, --help          Show this help text
 EOF
 }
@@ -37,30 +40,13 @@ EOF
 while [ $# -gt 0 ]; do
     case "$1" in
         --yes) ASSUME_YES=1; shift ;;
-        --no-auto-patch) INSTALL_AUTO_PATCH=0; shift ;;
+        --no-auto-patch) INSTALL_AUTO_UPDATE=0; shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
     esac
 done
 
-info()  { echo "  $*"; }
-ok()    { echo "${C_GREEN}✓${C_RESET} $*"; }
-warn()  { echo "${C_YELLOW}!${C_RESET} $*"; }
-fail()  { echo "${C_RED}✗${C_RESET} $*" >&2; exit 1; }
-
-# Color support: only when writing to a real terminal that isn't "dumb"
-# and the user hasn't opted out via NO_COLOR (https://no-color.org/).
-if [ -t 1 ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-dumb}" != "dumb" ]; then
-    C_GREEN=$'\033[32m'; C_RED=$'\033[31m'; C_YELLOW=$'\033[33m'; C_BOLD=$'\033[1m'; C_RESET=$'\033[0m'
-else
-    C_GREEN=""; C_RED=""; C_YELLOW=""; C_BOLD=""; C_RESET=""
-fi
-
-HR="──────────────────────────────"
-
-echo "$HR"
-echo " ${C_BOLD}Vivaldi Swift Installer${C_RESET}"
-echo "$HR"
+banner "Vivaldi Swift Installer"
 
 # ----------------------------------------------------------------------------
 # 1. Architecture info (informational only — same Resources layout on both)
@@ -68,9 +54,9 @@ echo "$HR"
 ARCH="$(uname -m)"
 ok "Detecting operating system"
 if [ "$ARCH" = "arm64" ]; then
-    info "macOS (Apple Silicon)"
+    step "macOS (Apple Silicon)"
 else
-    info "macOS (Intel)"
+    step "macOS (Intel)"
 fi
 
 # ----------------------------------------------------------------------------
@@ -96,14 +82,14 @@ if [ -z "$APP_PATH" ]; then
     fail "Vivaldi.app was not found in /Applications, ~/Applications, or Homebrew Caskroom. Install Vivaldi first: https://vivaldi.com/download/"
 fi
 ok "Detecting Vivaldi installation"
-info "$APP_PATH"
+step "$APP_PATH"
 
 # ----------------------------------------------------------------------------
 # 3. Create the Vivaldi-Swift directory layout
 # ----------------------------------------------------------------------------
-mkdir -p "$MOD_DIR"/{css,js,icons,backups,logs,bin}
+mkdir -p "$MOD_DIR"/{css,js,icons,backups,logs,bin/lib}
 ok "Creating directories"
-info "$MOD_DIR"
+step "$MOD_DIR"
 
 # ----------------------------------------------------------------------------
 # 4. Copy payload files
@@ -117,20 +103,27 @@ ok "Installing JavaScript"
 if [ -d "$REPO_ROOT/icons" ]; then
     cp -rf "$REPO_ROOT/icons/." "$MOD_DIR/icons/" 2>/dev/null || true
 fi
-[ -f "$REPO_ROOT/version.json" ] && cp -f "$REPO_ROOT/version.json" "$MOD_DIR/version.json"
 
 # ----------------------------------------------------------------------------
-# 5. Install the patch service: copy the patch engine into $MOD_DIR/bin and
-#    register the background job that keeps it reapplied after Vivaldi
-#    updates (LaunchAgent).
+# 5. Install the patch engine + auto-updater into $MOD_DIR/bin, and record
+#    which repository snapshot this install came from.
 # ----------------------------------------------------------------------------
+cp -f "$SCRIPT_DIR/lib/common.sh" "$MOD_DIR/bin/lib/common.sh"
 cp -f "$SCRIPT_DIR/patch/patch-macos.sh" "$MOD_DIR/bin/patch-macos.sh"
-chmod +x "$MOD_DIR/bin/patch-macos.sh"
-cp -f "$SCRIPT_DIR/uninstall-macos.sh" "$MOD_DIR/bin/uninstall-macos.sh" 2>/dev/null || true
-chmod +x "$MOD_DIR/bin/uninstall-macos.sh" 2>/dev/null || true
-[ -f "$SCRIPT_DIR/update-macos.sh" ] && { cp -f "$SCRIPT_DIR/update-macos.sh" "$MOD_DIR/bin/update-macos.sh"; chmod +x "$MOD_DIR/bin/update-macos.sh"; }
+cp -f "$SCRIPT_DIR/update-macos.sh" "$MOD_DIR/bin/update-macos.sh"
+cp -f "$SCRIPT_DIR/uninstall-macos.sh" "$MOD_DIR/bin/uninstall-macos.sh"
+chmod +x "$MOD_DIR/bin/patch-macos.sh" "$MOD_DIR/bin/update-macos.sh" "$MOD_DIR/bin/uninstall-macos.sh"
 
-if [ "$INSTALL_AUTO_PATCH" -eq 1 ]; then
+if sha="$(remote_repo_sha)" && [ -n "$sha" ]; then
+    echo "$sha" > "$MOD_DIR/.repo-sha"
+fi
+
+# ----------------------------------------------------------------------------
+# 6. Register the background auto-update service. It reapplies the patch
+#    and quietly syncs new repository changes on its own — there is no
+#    manual update command.
+# ----------------------------------------------------------------------------
+if [ "$INSTALL_AUTO_UPDATE" -eq 1 ]; then
     mkdir -p "$HOME/Library/LaunchAgents"
 
     cat > "$PLIST_PATH" <<EOF
@@ -143,14 +136,13 @@ if [ "$INSTALL_AUTO_PATCH" -eq 1 ]; then
     <string>$PLIST_LABEL</string>
     <key>ProgramArguments</key>
     <array>
-        <string>$MOD_DIR/bin/patch-macos.sh</string>
+        <string>$MOD_DIR/bin/update-macos.sh</string>
         <string>--app-path</string>
         <string>$APP_PATH</string>
-        <string>--yes</string>
         <string>--quiet</string>
     </array>
     <key>StartInterval</key>
-    <integer>21600</integer>
+    <integer>86400</integer>
     <key>RunAtLoad</key>
     <true/>
     <key>StandardOutPath</key>
@@ -162,19 +154,22 @@ if [ "$INSTALL_AUTO_PATCH" -eq 1 ]; then
 EOF
 
     launchctl unload "$PLIST_PATH" >/dev/null 2>&1 || true
-    ok "Installing patch service"
+    launchctl unload "$HOME/Library/LaunchAgents/com.vivaldiswift.patch.plist" >/dev/null 2>&1 || true
+    rm -f "$HOME/Library/LaunchAgents/com.vivaldiswift.patch.plist" 2>/dev/null || true
+
+    ok "Installing auto-update service"
     if launchctl load "$PLIST_PATH" >/dev/null 2>&1; then
-        info "LaunchAgent (runs every 6h and at login)"
+        step "LaunchAgent (runs daily; the script self-gates so login runs are cheap)"
     else
         warn "Could not load the LaunchAgent automatically. Run: launchctl load $PLIST_PATH"
     fi
 else
-    ok "Installing patch service"
-    info "auto-reapply skipped (--no-auto-patch)"
+    ok "Installing auto-update service"
+    step "auto-update skipped (--no-auto-patch)"
 fi
 
 # ----------------------------------------------------------------------------
-# 6. Apply the patch (backs up window.html, injects CSS/JS, then verifies —
+# 7. Apply the patch (backs up window.html, injects CSS/JS, then verifies —
 #    automatically rolling back if verification fails)
 # ----------------------------------------------------------------------------
 PATCH_ARGS=("--mod-dir" "$MOD_DIR" "--app-path" "$APP_PATH")
@@ -215,4 +210,5 @@ if command -v xattr >/dev/null 2>&1; then
     echo "  xattr -cr \"$APP_PATH\""
     echo
 fi
+echo "Vivaldi Swift updates itself automatically — nothing else to run."
 echo "To uninstall, run: install/uninstall-macos.sh"

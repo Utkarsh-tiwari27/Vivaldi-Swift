@@ -6,16 +6,8 @@
 # window.html, so the modifications load on every browser start.
 #
 # This script is idempotent: running it multiple times will not create
-# duplicate injections, and it is safe to call from the installer, from a
-# systemd user service after a Vivaldi update, or manually.
-#
-# Based on the original Vivaldi Swift patcher, itself derived from
-# GwenDragon's community patch script, with the following additions:
-#   - CSS + JS injection (not just JS)
-#   - Structured logging to Vivaldi-Swift/logs/
-#   - Non-interactive mode for automated / scheduled runs
-#   - Broader install detection (snap, flatpak-adjacent /opt layouts)
-#   - Safe, namespaced backups under Vivaldi-Swift/backups/
+# duplicate injections, and it is safe to call from the installer, from
+# the auto-updater after a Vivaldi update, or manually.
 #
 # Usage:
 #   patch-linux.sh [--mod-dir <path>] [--install-dir <path>] [--yes] [--quiet]
@@ -30,10 +22,12 @@
 
 set -euo pipefail
 
-# ----------------------------------------------------------------------------
-# Defaults
-# ----------------------------------------------------------------------------
-SCRIPT_NAME="patch-linux.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="$SCRIPT_DIR/../lib"
+[ -f "$LIB_DIR/common.sh" ] || LIB_DIR="$SCRIPT_DIR/lib"   # installed layout: bin/patch-linux.sh, bin/lib/common.sh
+# shellcheck source=SCRIPTDIR/../lib/common.sh
+source "$LIB_DIR/common.sh"
+
 DEFAULT_MOD_DIR="$HOME/Vivaldi-Swift"
 MOD_DIR="$DEFAULT_MOD_DIR"
 FORCED_INSTALL_DIR=""
@@ -45,34 +39,11 @@ JS_FILE="custom.js"
 CSS_MARKER='<link rel="stylesheet" href="vivaldi_swift.css">'
 JS_MARKER='<script src="custom.js"></script>'
 
-LOG_DIR="$DEFAULT_MOD_DIR/logs"
-LOG_FILE="$LOG_DIR/patch-linux.log"
-
-# ----------------------------------------------------------------------------
-# Helpers
-# ----------------------------------------------------------------------------
-log() {
-    local level="$1"; shift
-    local msg="$*"
-    local ts
-    ts="$(date '+%Y-%m-%d %H:%M:%S')"
-    mkdir -p "$LOG_DIR" 2>/dev/null || true
-    echo "[$ts] [$level] $msg" >> "$LOG_FILE" 2>/dev/null || true
-    if [ "$QUIET" -eq 0 ]; then
-        case "$level" in
-            ERROR) echo "✗ $msg" >&2 ;;
-            WARN)  echo "! $msg" ;;
-            OK)    echo "✓ $msg" ;;
-            *)     echo "$msg" ;;
-        esac
-    fi
-}
-
 usage() {
     cat <<EOF
 Vivaldi Swift — Linux Patch Engine
 
-Usage: $SCRIPT_NAME [options]
+Usage: $(basename "$0") [options]
 
 Options:
   --mod-dir <path>       Directory containing vivaldi_swift.css / custom.js
@@ -86,9 +57,6 @@ Options:
 EOF
 }
 
-# ----------------------------------------------------------------------------
-# Argument parsing
-# ----------------------------------------------------------------------------
 while [ $# -gt 0 ]; do
     case "$1" in
         --mod-dir)
@@ -108,8 +76,7 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-LOG_DIR="$MOD_DIR/logs"
-LOG_FILE="$LOG_DIR/patch-linux.log"
+LOG_FILE="$MOD_DIR/logs/patch-linux.log"
 
 log INFO "=== patch-linux.sh started (mod-dir=$MOD_DIR) ==="
 
@@ -223,15 +190,7 @@ log INFO "Detected Vivaldi version: $vivaldi_version"
 # ----------------------------------------------------------------------------
 # Determine whether a privilege escalation helper is required
 # ----------------------------------------------------------------------------
-SUDO=""
-if [ ! -w "$vivaldi_dir" ]; then
-    if command -v sudo >/dev/null 2>&1; then
-        SUDO="sudo"
-    else
-        log ERROR "No write permission to $vivaldi_dir and sudo is unavailable."
-        exit 3
-    fi
-fi
+SUDO="$(prime_sudo "$vivaldi_dir")"
 
 # ----------------------------------------------------------------------------
 # Locate the most recent backup on disk (used both for rollback and as a
@@ -284,9 +243,6 @@ backup_path=""
 if [ "$already_patched" -eq 1 ]; then
     log OK "window.html already patched. Refreshing asset copies only."
 else
-    # ------------------------------------------------------------------
-    # Backup window.html before any modification, then verify it landed
-    # ------------------------------------------------------------------
     mkdir -p "$backup_subdir"
     timestamp="$(date +%Y-%m-%dT%H-%M-%S)"
     backup_path="$backup_subdir/window.html-$timestamp"
@@ -302,9 +258,6 @@ else
     fi
     log OK "Creating backup"
 
-    # ------------------------------------------------------------------
-    # Inject CSS + JS references before </body>
-    # ------------------------------------------------------------------
     log INFO "Injecting CSS and JS references into window.html"
 
     tmp_file="$(mktemp)"
@@ -359,8 +312,6 @@ if [ ! -s "$vivaldi_dir/$JS_FILE" ]; then
 fi
 
 log OK "Verifying installation"
-
-echo "$vivaldi_version" > "$MOD_DIR/logs/.last-patched-version" 2>/dev/null || true
 
 log OK "Vivaldi Swift patch applied (Vivaldi $vivaldi_version)."
 log INFO "=== patch-linux.sh finished ==="

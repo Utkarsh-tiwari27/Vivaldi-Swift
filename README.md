@@ -140,9 +140,9 @@ cd Vivaldi-Swift
 
 - Detects `.deb`, `.rpm`, and Snap installations.
 - Uses `sudo` only when modifying Vivaldi's installation.
-- Installs a systemd user timer (cron fallback).
+- Installs a systemd user timer (cron fallback) that keeps Vivaldi Swift patched and up to date.
 - Optional flags:
-  - `--no-auto-patch`
+  - `--no-auto-patch` — skip installing the auto-update service
   - `--yes`
 
 **macOS**
@@ -151,13 +151,13 @@ cd Vivaldi-Swift
 - Supports both Intel and Apple Silicon.
 - Automatically re-signs the application after patching.
 - Optional flag:
-  - `--no-auto-patch`
+  - `--no-auto-patch` — skip installing the auto-update service
 
 **Windows**
 
 - Detects installations in `Program Files`, `Program Files (x86)`, and `%LocalAppData%`.
 - Supports portable installations via `-InstallDir`.
-- Creates a Task Scheduler job for automatic patching.
+- Creates a Task Scheduler task that keeps Vivaldi Swift patched and up to date.
 - If PowerShell blocks scripts:
 
 ```powershell
@@ -204,30 +204,29 @@ The uninstaller restores the latest backup, removes the automatic patch task, an
 
 ## Updating
 
-Vivaldi Swift updates on two independent fronts:
+Vivaldi Swift updates itself. There's no version to track and nothing to
+run manually:
 
-- **Vivaldi updates itself** → the background task reapplies the patch automatically.
-- **Vivaldi Swift releases a new version** → run the self-updater:
+- **Vivaldi updates itself** → the background service reapplies the patch automatically.
+- **Vivaldi Swift changes upstream** → the same background service notices, pulls the latest snapshot of this repository, and reapplies the patch.
 
-```bash
-~/Vivaldi-Swift/bin/update-linux.sh     # or update-macos.sh
-```
-
-```powershell
-& "$env:USERPROFILE\Vivaldi-Swift\bin\update-windows.ps1"
-```
+The repository is the source of truth — no version numbers, no releases.
+Install once, forget it exists.
 
 > [!NOTE]
-> The updater checks `version.json` first and exits immediately if you're already current — icons, logs, backups, and local overrides are never touched.
+> The background service checks once a day (and catches up at login if it
+> missed a day) and only downloads anything when the repository has
+> actually changed. Icons, logs, backups, and local overrides are never
+> touched.
 
 <br>
 
 ## Roadmap
 
 **✅ Completed**
-- Cross-platform installers, uninstallers, and self-updaters
+- Cross-platform installers and uninstallers
 - Per-OS patch engines with backup, verification, and rollback
-- Scheduled automatic patch reapplication
+- Fully automatic background updates — no version tracking, no manual update command
 - Speed Dial custom icon system
 - One-line bootstrap installers
 

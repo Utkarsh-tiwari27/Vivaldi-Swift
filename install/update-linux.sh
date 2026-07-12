@@ -1,145 +1,148 @@
 #!/usr/bin/env bash
 #
-# Vivaldi Swift — Linux Updater
+# Vivaldi Swift — Linux Auto-Updater
 # ----------------------------------------------------------------------------
-# Updates an existing Vivaldi Swift install in place, without a manual ZIP
-# download: fetches the latest GitHub Release, replaces the CSS/JS/patch
-# engine, and reapplies the patch. User icons, logs, and backups are left
-# untouched.
+# This is the background service the installer registers with systemd (or
+# cron). It is not meant to be run manually — install once, forget it
+# exists. Whenever the repository changes, Vivaldi Swift quietly updates
+# itself; there is no manual update command to run.
+#
+# The repository itself is the source of truth: no version numbers, no
+# releases. "An update is available" simply means "the latest commit on
+# main has a different SHA than the one we last synced."
+#
+# To keep this genuinely lightweight:
+#   - A run started less than 24h after the last successful check exits
+#     immediately without touching the network at all (self-gating; this
+#     is what makes it safe to also trigger this script at login).
+#   - If the repo hasn't changed, no snapshot is downloaded.
+#   - The patch is re-verified locally on every run (free, no network) so
+#     Vivaldi self-updates keep getting the UI reapplied even on days the
+#     repository itself doesn't change.
 #
 # Usage:
-#   ./update-linux.sh [--yes]
+#   ./update-linux.sh [--force] [--quiet]
 #
 # Exit codes:
-#   0  success (updated, or already up to date)
-#   1  not installed / not found
+#   0  success (up to date, updated, or skipped due to recent check)
+#   1  not installed
 #   2  download or extraction failed
 #   3  patch reapplication failed
 # ----------------------------------------------------------------------------
 
 set -euo pipefail
 
-# Placeholder org/repo — matches the rest of the project until it's
-# published under its real GitHub location.
-REPO="Utkarsh-tiwari27/Vivaldi-Swift"
-RELEASE_BASE="https://github.com/$REPO/releases/latest/download"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=SCRIPTDIR/lib/common.sh
+source "$SCRIPT_DIR/lib/common.sh"
 
 MOD_DIR="$HOME/Vivaldi-Swift"
+FORCE=0
+QUIET=0
+CHECK_INTERVAL_SECS=$((24 * 60 * 60))
 
 usage() {
     cat <<EOF
-Vivaldi Swift — Linux Updater
+Vivaldi Swift — Linux Auto-Updater
 
 Usage: $(basename "$0") [options]
 
 Options:
-  --yes       Non-interactive mode (auto-confirm all prompts)
+  --force     Bypass the 24h staleness gate and check now
+  --quiet     Suppress console output (log file still written)
   -h, --help  Show this help text
 EOF
 }
 
 while [ $# -gt 0 ]; do
     case "$1" in
+        --force) FORCE=1; shift ;;
+        --quiet) QUIET=1; shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
     esac
 done
 
-info()  { echo "  $*"; }
-ok()    { echo "✓ $*"; }
-warn()  { echo "! $*"; }
-fail()  { echo "✗ $*" >&2; exit 1; }
+LOG_FILE="$MOD_DIR/logs/update-linux.log"
+STATE_FILE="$MOD_DIR/.repo-sha"
+LAST_CHECK_FILE="$MOD_DIR/logs/.last-update-check"
 
-echo "──────────────────────────────"
-echo " Vivaldi Swift Updater"
-echo "──────────────────────────────"
+log INFO "=== update-linux.sh started ==="
 
 if [ ! -d "$MOD_DIR" ]; then
-    fail "Vivaldi Swift is not installed ($MOD_DIR not found). Run install-linux.sh first."
+    log ERROR "Vivaldi Swift is not installed ($MOD_DIR not found)."
+    exit 1
 fi
 
-command -v curl  >/dev/null 2>&1 || fail "curl is required to check for updates."
-command -v unzip >/dev/null 2>&1 || fail "unzip is required to install updates."
-
 # ----------------------------------------------------------------------------
-# Compare local vs. remote version.json — no need to download the full
-# release archive just to find out an update isn't needed.
+# Staleness gate — avoids unnecessary network traffic when triggered both
+# on a daily timer and at login.
 # ----------------------------------------------------------------------------
-local_version="unknown"
-[ -f "$MOD_DIR/version.json" ] && \
-    local_version="$(grep -oP '"version"\s*:\s*"\K[^"]+' "$MOD_DIR/version.json" 2>/dev/null || echo unknown)"
-
-remote_version_json="$(mktemp)"
-work_dir="$(mktemp -d)"
-cleanup() { rm -f "$remote_version_json"; rm -rf "$work_dir"; }
-trap cleanup EXIT
-
-if ! curl -fsSL -o "$remote_version_json" "$RELEASE_BASE/version.json"; then
-    fail "Could not reach GitHub Releases for $REPO. Check your connection and the REPO placeholder in this script."
+if [ "$FORCE" -eq 0 ] && [ -f "$LAST_CHECK_FILE" ]; then
+    last_check="$(cat "$LAST_CHECK_FILE" 2>/dev/null || echo 0)"
+    now="$(date +%s)"
+    if [ -n "$last_check" ] && [ $((now - last_check)) -lt "$CHECK_INTERVAL_SECS" ]; then
+        log INFO "Checked recently; skipping until the next scheduled run."
+        exit 0
+    fi
 fi
-remote_version="$(grep -oP '"version"\s*:\s*"\K[^"]+' "$remote_version_json" 2>/dev/null || echo unknown)"
 
-info "Installed version : $local_version"
-info "Latest version     : $remote_version"
+command -v curl  >/dev/null 2>&1 || { log ERROR "curl is required to check for updates."; exit 2; }
+command -v unzip >/dev/null 2>&1 || { log ERROR "unzip is required to install updates."; exit 2; }
 
-if [ "$local_version" = "$remote_version" ] && [ "$remote_version" != "unknown" ]; then
-    ok "Already up to date (v$local_version)."
+# ----------------------------------------------------------------------------
+# Compare the local and remote commit SHAs.
+# ----------------------------------------------------------------------------
+remote_sha="$(remote_repo_sha)"
+if [ -z "$remote_sha" ]; then
+    log WARN "Could not reach GitHub to check for updates. Will retry on the next run."
     exit 0
 fi
+date +%s > "$LAST_CHECK_FILE" 2>/dev/null || true
 
-# ----------------------------------------------------------------------------
-# Download and extract the latest release
-# ----------------------------------------------------------------------------
-archive="$work_dir/vivaldi-swift.zip"
-info "Downloading latest release..."
-if ! curl -fsSL -o "$archive" "$RELEASE_BASE/vivaldi-swift.zip"; then
-    fail "Download failed. Check your connection and the REPO placeholder in this script."
-fi
+local_sha="$(local_repo_sha "$STATE_FILE")"
 
-if ! unzip -q "$archive" -d "$work_dir/extracted"; then
-    fail "Could not extract the downloaded release archive."
-fi
+if [ "$remote_sha" = "$local_sha" ]; then
+    log OK "Vivaldi Swift is up to date."
+else
+    log INFO "Repository has changed; syncing latest snapshot..."
 
-# The release zip may contain a single top-level folder; find the repo root
-# by locating version.json inside it.
-new_root="$(dirname "$(find "$work_dir/extracted" -maxdepth 3 -name "version.json" | head -n 1)")"
-if [ -z "$new_root" ] || [ ! -d "$new_root" ]; then
-    fail "Downloaded release archive has an unexpected layout."
-fi
-ok "Downloaded and extracted v$remote_version"
+    work_dir="$(mktemp -d)"
+    trap 'rm -rf "$work_dir"' EXIT
 
-# ----------------------------------------------------------------------------
-# Replace only the files Vivaldi Swift owns. Icons, logs, backups, and any
-# local overrides (*.local.css/js) are never touched.
-# ----------------------------------------------------------------------------
-info "Updating CSS, JS, and patch engine..."
+    new_root="$(download_repo_snapshot "$work_dir")"
+    if [ -z "$new_root" ] || [ ! -d "$new_root" ]; then
+        log ERROR "Download or extraction failed."
+        exit 2
+    fi
 
-cp -f "$new_root/css/vivaldi_swift.css" "$MOD_DIR/vivaldi_swift.css"
-cp -f "$new_root/js/custom.js" "$MOD_DIR/custom.js"
+    # Replace only the files Vivaldi Swift owns. Icons, logs, backups, and
+    # any local overrides are never touched.
+    cp -f "$new_root/css/vivaldi_swift.css" "$MOD_DIR/vivaldi_swift.css"
+    cp -f "$new_root/js/custom.js" "$MOD_DIR/custom.js"
 
-mkdir -p "$MOD_DIR/bin"
-cp -f "$new_root/install/patch/patch-linux.sh" "$MOD_DIR/bin/patch-linux.sh"
-chmod +x "$MOD_DIR/bin/patch-linux.sh"
-[ -f "$new_root/install/uninstall-linux.sh" ] && {
-    cp -f "$new_root/install/uninstall-linux.sh" "$MOD_DIR/bin/uninstall-linux.sh"
-    chmod +x "$MOD_DIR/bin/uninstall-linux.sh"
-}
-[ -f "$new_root/install/update-linux.sh" ] && {
+    mkdir -p "$MOD_DIR/bin" "$MOD_DIR/bin/lib"
+    cp -f "$new_root/install/lib/common.sh" "$MOD_DIR/bin/lib/common.sh"
+    cp -f "$new_root/install/patch/patch-linux.sh" "$MOD_DIR/bin/patch-linux.sh"
     cp -f "$new_root/install/update-linux.sh" "$MOD_DIR/bin/update-linux.sh"
-    chmod +x "$MOD_DIR/bin/update-linux.sh"
-}
-[ -f "$new_root/version.json" ] && cp -f "$new_root/version.json" "$MOD_DIR/version.json"
+    cp -f "$new_root/install/uninstall-linux.sh" "$MOD_DIR/bin/uninstall-linux.sh"
+    chmod +x "$MOD_DIR/bin/patch-linux.sh" "$MOD_DIR/bin/update-linux.sh" "$MOD_DIR/bin/uninstall-linux.sh"
 
-ok "Files updated."
-
-# ----------------------------------------------------------------------------
-# Reapply the patch with the freshly-updated files
-# ----------------------------------------------------------------------------
-info "Reapplying patch..."
-PATCH_ARGS=("--mod-dir" "$MOD_DIR" "--yes")
-if ! "$MOD_DIR/bin/patch-linux.sh" "${PATCH_ARGS[@]}"; then
-    fail "Patch reapplication failed. See $MOD_DIR/logs/patch-linux.log for details."
+    echo "$remote_sha" > "$STATE_FILE"
+    log OK "Repository synced to $remote_sha."
 fi
 
-echo
-ok "Updated to v$remote_version. Restart Vivaldi to see the changes."
+# ----------------------------------------------------------------------------
+# Reapply the patch unconditionally. This is a cheap, local, idempotent
+# no-op if Vivaldi is already patched with the current files — it's what
+# keeps the UI intact after Vivaldi itself auto-updates.
+# ----------------------------------------------------------------------------
+PATCH_ARGS=("--mod-dir" "$MOD_DIR" "--yes")
+[ "$QUIET" -eq 1 ] && PATCH_ARGS+=("--quiet")
+
+if ! "$MOD_DIR/bin/patch-linux.sh" "${PATCH_ARGS[@]}"; then
+    log ERROR "Patch reapplication failed. See $MOD_DIR/logs/patch-linux.log for details."
+    exit 3
+fi
+
+log INFO "=== update-linux.sh finished ==="

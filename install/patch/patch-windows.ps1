@@ -49,36 +49,19 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# Try to render unicode checkmarks correctly on older Windows consoles;
-# fall back silently (PowerShell keeps working either way).
-try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$LibDir = Join-Path (Split-Path -Parent $ScriptDir) "lib"
+if (-not (Test-Path (Join-Path $LibDir "common.ps1"))) {
+    $LibDir = Join-Path $ScriptDir "lib"   # installed layout: bin\patch-windows.ps1, bin\lib\common.ps1
+}
+. (Join-Path $LibDir "common.ps1")
 
 $CssFile   = "vivaldi_swift.css"
 $JsFile    = "custom.js"
 $CssMarker = '<link rel="stylesheet" href="vivaldi_swift.css">'
 $JsMarker  = '<script src="custom.js"></script>'
 
-$LogDir  = Join-Path $ModDir "logs"
-$LogFile = Join-Path $LogDir "patch-windows.log"
-
-function Write-Log {
-    param(
-        [Parameter(Mandatory = $true)][string]$Level,
-        [Parameter(Mandatory = $true)][string]$Message
-    )
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
-    "[$timestamp] [$Level] $Message" | Out-File -FilePath $LogFile -Append -Encoding utf8
-
-    if (-not $Quiet) {
-        switch ($Level) {
-            "ERROR" { Write-Host "✗ $Message" -ForegroundColor Red }
-            "WARN"  { Write-Host "! $Message" -ForegroundColor Yellow }
-            "OK"    { Write-Host "✓ $Message" -ForegroundColor Green }
-            default { Write-Host "  $Message" }
-        }
-    }
-}
+$LogFile = Join-Path $ModDir "logs\patch-windows.log"
 
 function Exit-WithCode {
     param([int]$Code, [string]$Message)
@@ -212,7 +195,7 @@ try {
     [System.IO.File]::WriteAllText($testFile, "test")
     Remove-Item $testFile -Force
 } catch {
-    Exit-WithCode 3 "No write permission to $vivaldiDir. Try running this script as Administrator."
+    Exit-WithCode 3 "No write permission to $vivaldiDir. Run this script from an Administrator PowerShell."
 }
 
 # ------------------------------------------------------------------------
@@ -331,8 +314,6 @@ if (-not (Test-Path $installedJs) -or (Get-Item $installedJs).Length -eq 0) {
 }
 
 Write-Log "OK" "Verifying installation"
-
-$vivaldiVersion | Out-File -FilePath (Join-Path $LogDir ".last-patched-version") -Encoding utf8 -NoNewline
 
 Write-Log "OK" "Vivaldi Swift patch applied (Vivaldi $vivaldiVersion)."
 Write-Log "INFO" "=== patch-windows.ps1 finished ==="

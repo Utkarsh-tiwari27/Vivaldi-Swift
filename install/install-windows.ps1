@@ -5,14 +5,15 @@
 .DESCRIPTION
     Sets up %USERPROFILE%\Vivaldi-Swift, copies the CSS/JS payload and
     patch engine into it, applies the patch to a detected Vivaldi
-    installation, and registers a Task Scheduler task that keeps the mod
-    re-applied after Vivaldi auto-updates.
+    installation, and registers a Task Scheduler task that keeps Vivaldi
+    Swift patched and quietly up to date on its own — no manual update
+    command required.
 
 .PARAMETER Yes
     Non-interactive mode (auto-confirm all prompts).
 
 .PARAMETER NoAutoPatch
-    Skip registering the Task Scheduler auto-reapply task.
+    Skip registering the Task Scheduler auto-update task.
 
 .EXAMPLE
     .\install-windows.ps1
@@ -31,29 +32,18 @@ $ErrorActionPreference = "Stop"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot  = Split-Path -Parent $ScriptDir
-$ModDir    = "$env:USERPROFILE\Vivaldi-Swift"
-$TaskName  = "VivaldiSwiftPatch"
+. (Join-Path $ScriptDir "lib\common.ps1")
 
-# Try to render unicode checkmarks/arrows correctly on older Windows
-# consoles; fall back silently (PowerShell keeps working either way).
-try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
+$ModDir   = "$env:USERPROFILE\Vivaldi-Swift"
+$TaskName = "VivaldiSwiftAutoUpdate"
 
-function Info { param($m) Write-Host "  $m" }
-function Ok   { param($m) Write-Host "✓ $m" -ForegroundColor Green }
-function Warn { param($m) Write-Host "! $m" -ForegroundColor Yellow }
-function Fail { param($m) Write-Host "✗ $m" -ForegroundColor Red; exit 1 }
-
-$Hr = "──────────────────────────────"
-
-Write-Host $Hr
-Write-Host " Vivaldi Swift Installer"
-Write-Host $Hr
+Write-Banner "Vivaldi Swift Installer"
 
 # ------------------------------------------------------------------------
 # 1. Detect operating system (informational)
 # ------------------------------------------------------------------------
 Ok "Detecting operating system"
-Info ([System.Environment]::OSVersion.VersionString)
+Step ([System.Environment]::OSVersion.VersionString)
 
 # ------------------------------------------------------------------------
 # 2. Detect Vivaldi
@@ -87,16 +77,16 @@ if (-not $FoundInstall) {
     Fail "Vivaldi was not found under Program Files, Program Files (x86), or LocalAppData. Install Vivaldi first: https://vivaldi.com/download/"
 }
 Ok "Detecting Vivaldi installation"
-Info $FoundInstall
+Step $FoundInstall
 
 # ------------------------------------------------------------------------
 # 3. Create the Vivaldi-Swift directory layout
 # ------------------------------------------------------------------------
-foreach ($sub in @("css", "js", "icons", "backups", "logs", "bin")) {
+foreach ($sub in @("css", "js", "icons", "backups", "logs", "bin\lib")) {
     New-Item -ItemType Directory -Force -Path (Join-Path $ModDir $sub) | Out-Null
 }
 Ok "Creating directories"
-Info $ModDir
+Step $ModDir
 
 # ------------------------------------------------------------------------
 # 4. Copy payload files
@@ -111,35 +101,39 @@ $IconsSrc = Join-Path $RepoRoot "icons"
 if (Test-Path $IconsSrc) {
     Copy-Item -Path "$IconsSrc\*" -Destination (Join-Path $ModDir "icons") -Recurse -Force -ErrorAction SilentlyContinue
 }
-$VersionSrc = Join-Path $RepoRoot "version.json"
-if (Test-Path $VersionSrc) {
-    Copy-Item -Path $VersionSrc -Destination (Join-Path $ModDir "version.json") -Force
-}
 
 # ------------------------------------------------------------------------
-# 5. Install the patch service: copy the patch engine into $ModDir\bin and
-#    register the background task that keeps it reapplied after Vivaldi
-#    updates (Task Scheduler).
+# 5. Install the patch engine + auto-updater into $ModDir\bin, and record
+#    which repository snapshot this install came from.
 # ------------------------------------------------------------------------
+Copy-Item -Path (Join-Path $ScriptDir "lib\common.ps1") -Destination (Join-Path $ModDir "bin\lib\common.ps1") -Force
 Copy-Item -Path (Join-Path $ScriptDir "patch\patch-windows.ps1") -Destination (Join-Path $ModDir "bin\patch-windows.ps1") -Force
-$UninstallSrc = Join-Path $ScriptDir "uninstall-windows.ps1"
-if (Test-Path $UninstallSrc) {
-    Copy-Item -Path $UninstallSrc -Destination (Join-Path $ModDir "bin\uninstall-windows.ps1") -Force
-}
-$UpdateSrc = Join-Path $ScriptDir "update-windows.ps1"
-if (Test-Path $UpdateSrc) {
-    Copy-Item -Path $UpdateSrc -Destination (Join-Path $ModDir "bin\update-windows.ps1") -Force
-}
+Copy-Item -Path (Join-Path $ScriptDir "update-windows.ps1") -Destination (Join-Path $ModDir "bin\update-windows.ps1") -Force
+Copy-Item -Path (Join-Path $ScriptDir "uninstall-windows.ps1") -Destination (Join-Path $ModDir "bin\uninstall-windows.ps1") -Force
 
 $PatchScript = Join-Path $ModDir "bin\patch-windows.ps1"
 
+try {
+    $sha = Get-RemoteRepoSha
+    if ($sha) { Set-Content -Path (Join-Path $ModDir ".repo-sha") -Value $sha -NoNewline -Encoding utf8 }
+} catch { }
+
+# ------------------------------------------------------------------------
+# 6. Register the background auto-update service. It reapplies the patch
+#    and quietly syncs new repository changes on its own — there is no
+#    manual update command.
+# ------------------------------------------------------------------------
 if (-not $NoAutoPatch) {
     try {
+        # Remove any task registered by an older version of the installer.
+        Unregister-ScheduledTask -TaskName "VivaldiSwiftPatch" -Confirm:$false -ErrorAction SilentlyContinue
+
+        $updateScript = Join-Path $ModDir "bin\update-windows.ps1"
         $action = New-ScheduledTaskAction -Execute "powershell.exe" `
-            -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$PatchScript`" -ModDir `"$ModDir`" -Yes -Quiet"
+            -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$updateScript`" -Quiet"
 
         $triggerLogon = New-ScheduledTaskTrigger -AtLogOn
-        $triggerDaily = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Hours 6) -RepetitionDuration ([TimeSpan]::MaxValue)
+        $triggerDaily = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Hours 24) -RepetitionDuration ([TimeSpan]::MaxValue)
 
         $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
 
@@ -147,23 +141,23 @@ if (-not $NoAutoPatch) {
             -Action $action `
             -Trigger @($triggerLogon, $triggerDaily) `
             -Settings $settings `
-            -Description "Reapplies the Vivaldi Swift UI patch after Vivaldi updates." `
+            -Description "Keeps Vivaldi Swift patched and up to date. Runs daily; the script self-gates so logon runs are cheap." `
             -Force | Out-Null
 
-        Ok "Installing patch service"
-        Info "Task Scheduler task '$TaskName' (runs at logon and every 6h)"
+        Ok "Installing auto-update service"
+        Step "Task Scheduler task '$TaskName' (runs daily and at logon)"
     } catch {
-        Ok "Installing patch service"
+        Ok "Installing auto-update service"
         Warn "Could not register the scheduled task automatically: $($_.Exception.Message)"
-        Warn "You can create it manually via Task Scheduler, running: powershell.exe -File `"$PatchScript`" -Yes -Quiet"
+        Warn "You can create it manually via Task Scheduler, running: powershell.exe -File `"$updateScript`" -Quiet"
     }
 } else {
-    Ok "Installing patch service"
-    Info "auto-reapply skipped (-NoAutoPatch)"
+    Ok "Installing auto-update service"
+    Step "auto-update skipped (-NoAutoPatch)"
 }
 
 # ------------------------------------------------------------------------
-# 6. Apply the patch (backs up window.html, injects CSS/JS, then verifies —
+# 7. Apply the patch (backs up window.html, injects CSS/JS, then verifies —
 #    automatically rolling back if verification fails)
 # ------------------------------------------------------------------------
 $PatchArgs = @{ ModDir = $ModDir }
@@ -200,4 +194,5 @@ Write-Host ""
 Write-Host "  Logs    : $ModDir\logs\"
 Write-Host "  Backups : $ModDir\backups\"
 Write-Host ""
+Write-Host "Vivaldi Swift updates itself automatically — nothing else to run."
 Write-Host "To uninstall, run: install\uninstall-windows.ps1"

@@ -26,7 +26,12 @@
 
 set -euo pipefail
 
-SCRIPT_NAME="patch-macos.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="$SCRIPT_DIR/../lib"
+[ -f "$LIB_DIR/common.sh" ] || LIB_DIR="$SCRIPT_DIR/lib"   # installed layout: bin/patch-macos.sh, bin/lib/common.sh
+# shellcheck source=SCRIPTDIR/../lib/common.sh
+source "$LIB_DIR/common.sh"
+
 DEFAULT_MOD_DIR="$HOME/Vivaldi-Swift"
 MOD_DIR="$DEFAULT_MOD_DIR"
 FORCED_APP_PATH=""
@@ -38,31 +43,11 @@ JS_FILE="custom.js"
 CSS_MARKER='<link rel="stylesheet" href="vivaldi_swift.css">'
 JS_MARKER='<script src="custom.js"></script>'
 
-LOG_DIR="$DEFAULT_MOD_DIR/logs"
-LOG_FILE="$LOG_DIR/patch-macos.log"
-
-log() {
-    local level="$1"; shift
-    local msg="$*"
-    local ts
-    ts="$(date '+%Y-%m-%d %H:%M:%S')"
-    mkdir -p "$LOG_DIR" 2>/dev/null || true
-    echo "[$ts] [$level] $msg" >> "$LOG_FILE" 2>/dev/null || true
-    if [ "$QUIET" -eq 0 ]; then
-        case "$level" in
-            ERROR) echo "✗ $msg" >&2 ;;
-            WARN)  echo "! $msg" ;;
-            OK)    echo "✓ $msg" ;;
-            *)     echo "$msg" ;;
-        esac
-    fi
-}
-
 usage() {
     cat <<EOF
 Vivaldi Swift — macOS Patch Engine
 
-Usage: $SCRIPT_NAME [options]
+Usage: $(basename "$0") [options]
 
 Options:
   --mod-dir <path>   Directory containing vivaldi_swift.css / custom.js
@@ -94,8 +79,7 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-LOG_DIR="$MOD_DIR/logs"
-LOG_FILE="$LOG_DIR/patch-macos.log"
+LOG_FILE="$MOD_DIR/logs/patch-macos.log"
 
 log INFO "=== patch-macos.sh started (mod-dir=$MOD_DIR) ==="
 
@@ -205,15 +189,7 @@ log INFO "Detected Vivaldi version: $vivaldi_version"
 # ----------------------------------------------------------------------------
 # Determine whether elevated privileges are required
 # ----------------------------------------------------------------------------
-SUDO=""
-if [ ! -w "$vivaldi_dir" ]; then
-    if command -v sudo >/dev/null 2>&1; then
-        SUDO="sudo"
-    else
-        log ERROR "No write permission to $vivaldi_dir and sudo is unavailable."
-        exit 3
-    fi
-fi
+SUDO="$(prime_sudo "$vivaldi_dir")"
 
 # ----------------------------------------------------------------------------
 # Locate the most recent backup on disk (used both for rollback and as a
@@ -266,7 +242,6 @@ backup_path=""
 if [ "$already_patched" -eq 1 ]; then
     log OK "window.html already patched. Refreshing asset copies only."
 else
-    backup_subdir="$MOD_DIR/backups/macos"
     mkdir -p "$backup_subdir"
     timestamp="$(date +%Y-%m-%dT%H-%M-%S)"
     backup_path="$backup_subdir/window.html-$timestamp"
@@ -344,8 +319,6 @@ if [ ! -s "$vivaldi_dir/$JS_FILE" ]; then
 fi
 
 log OK "Verifying installation"
-
-echo "$vivaldi_version" > "$MOD_DIR/logs/.last-patched-version" 2>/dev/null || true
 
 log OK "Vivaldi Swift patch applied (Vivaldi $vivaldi_version)."
 log INFO "=== patch-macos.sh finished ==="
