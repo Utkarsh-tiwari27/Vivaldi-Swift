@@ -171,7 +171,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ### 🗑️ Uninstall
 
 <details>
-<summary><strong>Restore the original Vivaldi UI</strong></summary>
+<summary><strong>To Uninstall the vivaldi swift setup simply run below commands</strong></summary>
 
 <br>
 
