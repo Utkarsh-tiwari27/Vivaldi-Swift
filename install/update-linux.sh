@@ -21,11 +21,10 @@ set -euo pipefail
 
 # Placeholder org/repo — matches the rest of the project until it's
 # published under its real GitHub location.
-REPO="vivaldi-swift/vivaldi-swift"
+REPO="Utkarsh-tiwari27/Vivaldi-Swift"
 RELEASE_BASE="https://github.com/$REPO/releases/latest/download"
 
 MOD_DIR="$HOME/Vivaldi-Swift"
-ASSUME_YES=0
 
 usage() {
     cat <<EOF
@@ -41,7 +40,6 @@ EOF
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --yes) ASSUME_YES=1; shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
     esac

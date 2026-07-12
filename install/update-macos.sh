@@ -21,11 +21,10 @@ set -euo pipefail
 
 # Placeholder org/repo — matches the rest of the project until it's
 # published under its real GitHub location.
-REPO="vivaldi-swift/vivaldi-swift"
+REPO="Utkarsh-tiwari27/Vivaldi-Swift"
 RELEASE_BASE="https://github.com/$REPO/releases/latest/download"
 
 MOD_DIR="$HOME/Vivaldi-Swift"
-ASSUME_YES=0
 FORCED_APP_PATH=""
 
 usage() {
@@ -44,7 +43,6 @@ EOF
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --yes) ASSUME_YES=1; shift ;;
         --app-path)
             FORCED_APP_PATH="${2:-}"
             [ -z "$FORCED_APP_PATH" ] && { echo "Missing value for --app-path" >&2; exit 1; }
