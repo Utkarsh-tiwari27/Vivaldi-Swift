@@ -250,10 +250,6 @@ Vivaldi Swift updates on two independent fronts:
 No — it's an independent community project, not affiliated with or endorsed by Vivaldi Technologies AS.
 </details>
 
-<details>
-<summary>Is it safe to use?</summary><br>
-Yes. It only patches Vivaldi's UI files, creates automatic backups, and can be fully removed with the uninstall script.
-</details>
 
 <details>
 <summary>Will Vivaldi updates break it?</summary><br>
@@ -265,14 +261,10 @@ No — the patch service reapplies itself automatically after browser updates.
 Yes, both Stable and Snapshot builds are supported.
 </details>
 
-<details>
-<summary>Can I use only the CSS or only the JavaScript?</summary><br>
-Yes, both components work independently for a manual setup.
-</details>
 
 <details>
 <summary>Does it affect browser performance?</summary><br>
-No noticeable impact — the CSS and JavaScript are lightweight by design.
+No impact — the CSS and JavaScript are lightweight by design.
 </details>
 
 <details>
@@ -296,7 +288,7 @@ Run the installer with elevated privileges (<code>sudo</code> or Administrator P
 
 <details>
 <summary>Nothing changed after installing</summary><br>
-Restart Vivaldi completely. If it still doesn't apply, rerun the patch script.
+Restart Vivaldi completely. If it still doesn't apply, rerun the install script.
 </details>
 
 <details>
