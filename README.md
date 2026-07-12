@@ -2,7 +2,7 @@
 
 # Vivaldi Swift
 
-**A liquid-glass redesign for the Vivaldi browser using custom css/js mods.**
+**A frosted/liquid-glass redesign for the Vivaldi browser using custom css/js mods.**
 
 Refined spacing, glass surfaces and custom high quality speed dial icons.
 
