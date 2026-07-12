@@ -21,7 +21,7 @@ Applied through a safe, reversible patch — one command, any platform.
   <img
     src="https://github.com/user-attachments/assets/1047578f-c2cc-4309-9c64-e9d0663c4006"
     alt="Vivaldi Swift Hero"
-    width="400"
+    style="max-width: 400px; width: 100%;"
   />
 </p>
 
