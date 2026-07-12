@@ -47,72 +47,134 @@ Refined spacing, glass surfaces and custom high quality speed dial icons.
 
 ## Installation
 
-Requires an existing install of [Vivaldi](https://vivaldi.com/download/) — stable or snapshot, version 6.0+.
+### 🚀 Automatic (Recommended)
 
-**Linux / macOS**
+Simply copy the command for based on your  operating system, paste it into your terminal, and press **Enter**.
 
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Utkarsh-tiwari27/Vivaldi-Swift/main/install/bootstrap.sh)
-```
+The installer will automatically set everything up.
 
-**Windows** (PowerShell)
+#### Windows (PowerShell)
 
 ```powershell
 irm https://raw.githubusercontent.com/Utkarsh-tiwari27/Vivaldi-Swift/main/install/bootstrap.ps1 | iex
 ```
 
-One command detects your OS and Vivaldi install, backs up `window.html`, injects the patch, copies the icon library, and schedules automatic reapplication after every Vivaldi update. Nothing outside `~/Vivaldi-Swift/` and Vivaldi's own resource directory is touched — no telemetry, no browser extension.
-
-> [!IMPORTANT]
-> One manual step remains. Open Vivaldi and go to
-> **Settings → Appearance → Custom UI Modifications → select `Vivaldi-Swift` → Restart Vivaldi**
-
-<details>
-<summary><b>Manual install & per-OS details</b></summary>
-<br>
+#### macos / linux
 
 ```bash
-# Linux
-git clone https://github.com/Utkarsh-tiwari27/Vivaldi-Swift.git
-cd Vivaldi-Swift
-./install/install-linux.sh
-
-# macOS
-./install/install-macos.sh
+bash <(curl -fsSL https://raw.githubusercontent.com/Utkarsh-tiwari27/Vivaldi-Swift/main/install/bootstrap.sh)
 ```
 
+### Step 2
+
+> [!IMPORTANT]
+> **One manual step is still required.**
+>
+> After the installer finishes:
+>
+> 1. Open vivaldi -> paste**`vivaldi://experiments`** into address bar hit enter.
+> 2. Search and Enable **Allow CSS Modifications**
+> 3. Open **Settings → Appearance**
+> 4. Under **Custom UI Modifications**, select the **Vivaldi-Swift** folder created after installtion in your home directory.
+> 5. Restart Vivaldi.
+
+---
+
+### 🛠️ Manual Installation
+
+<details>
+<summary><strong>Platform-specific installation</strong></summary>
+
+<br>
+
+#### Windows
+
 ```powershell
-# Windows (Administrator PowerShell recommended)
 git clone https://github.com/Utkarsh-tiwari27/Vivaldi-Swift.git
+
 cd Vivaldi-Swift
+
 .\install\install-windows.ps1
 ```
 
-**Linux** — detects `.deb`/`.rpm` and Snap installs under `/opt`. Uses `sudo` only for operations that touch Vivaldi's resource directory, never your home directory. Installs a systemd user timer (cron fallback). Skip it with `--no-auto-patch`; run unattended with `--yes`.
+#### Linux
 
-**macOS** — detects `Vivaldi.app` in `/Applications`, `~/Applications`, and Homebrew's Caskroom. Works on Intel and Apple Silicon. Re-signs the app with an ad-hoc signature after patching; if Gatekeeper still flags it, run `xattr -cr "/Applications/Vivaldi.app"`. Installs a LaunchAgent, skippable with `--no-auto-patch`.
+```bash
+git clone https://github.com/Utkarsh-tiwari27/Vivaldi-Swift.git
 
-**Windows** — detects Vivaldi under `Program Files`, `Program Files (x86)`, and `%LocalAppData%\Vivaldi`. Portable installs: point the patch engine at an explicit path with `-InstallDir`. Installs a Task Scheduler task, skippable with `-NoAutoPatch`. If script execution is disabled: `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`.
+cd Vivaldi-Swift
+
+./install/install-linux.sh
+```
+
+#### macOS
+
+```bash
+git clone https://github.com/Utkarsh-tiwari27/Vivaldi-Swift.git
+
+cd Vivaldi-Swift
+
+./install/install-macos.sh
+```
+
+### Platform Notes
+
+**Linux**
+
+- Detects `.deb`, `.rpm`, and Snap installations.
+- Uses `sudo` only when modifying Vivaldi's installation.
+- Installs a systemd user timer (cron fallback).
+- Optional flags:
+  - `--no-auto-patch`
+  - `--yes`
+
+**macOS**
+
+- Detects installations in `/Applications`, `~/Applications`, and Homebrew.
+- Supports both Intel and Apple Silicon.
+- Automatically re-signs the application after patching.
+- Optional flag:
+  - `--no-auto-patch`
+
+**Windows**
+
+- Detects installations in `Program Files`, `Program Files (x86)`, and `%LocalAppData%`.
+- Supports portable installations via `-InstallDir`.
+- Creates a Task Scheduler job for automatic patching.
+- If PowerShell blocks scripts:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
 
 </details>
 
+---
+
+### 🗑️ Uninstall
+
 <details>
-<summary><b>Uninstalling</b></summary>
+<summary><strong>Restore the original Vivaldi UI</strong></summary>
+
 <br>
 
+#### Linux / macOS
+
 ```bash
-./install/uninstall-linux.sh     # or uninstall-macos.sh
+./install/uninstall-linux.sh
+# or
+./install/uninstall-macos.sh
 ```
+
+#### Windows
 
 ```powershell
 .\install\uninstall-windows.ps1
 ```
 
-Restores your most recent `window.html` backup and removes the background task. Logs and backups are kept for reference — add `--purge` (`-Purge` on Windows) to remove everything, including `~/Vivaldi-Swift`.
+The uninstaller restores the latest backup, removes the automatic patch task, and returns Vivaldi to its original state.
 
 </details>
-
-<br>
 
 ## Features
 
