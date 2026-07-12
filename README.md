@@ -1,6 +1,6 @@
 <div align="center">
 
-### Vivaldi Swift
+# Vivaldi Swift
 
 **A liquid-glass redesign for the Vivaldi browser.**
 
