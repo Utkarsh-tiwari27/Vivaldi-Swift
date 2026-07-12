@@ -2,9 +2,9 @@
 
 # Vivaldi Swift
 
-**A liquid-glass redesign for the Vivaldi browser.**
+**A liquid-glass redesign for the Vivaldi browser using custom css/js mods.**
 
-Refined spacing, glass surfaces, and motion that feels native — through a safe, reversible patch. One command, any platform.
+Refined spacing, glass surfaces,custom high quality speed dial icons.
 
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20windows-informational?style=flat-square)](#installation)
 [![Vivaldi](https://img.shields.io/badge/vivaldi-6.0%2B-orange?style=flat-square)](https://vivaldi.com/download/)
