@@ -6,7 +6,7 @@
     Lets a first-time user install Vivaldi Swift with a single command,
     without cloning the repository or downloading a ZIP by hand:
 
-        irm https://raw.githubusercontent.com/vivaldi-swift/vivaldi-swift/main/install/bootstrap.ps1 | iex
+        irm https://raw.githubusercontent.com/Utkarsh-tiwari27/Vivaldi-Swift/main/install/bootstrap.ps1 | iex
 
     It downloads the latest GitHub Release, extracts it, runs
     install-windows.ps1, and cleans up after itself.
@@ -28,7 +28,7 @@ $ErrorActionPreference = "Stop"
 
 # Placeholder org/repo — matches the rest of the project until it's
 # published under its real GitHub location.
-$Repo = "vivaldi-swift/vivaldi-swift"
+$Repo = "Utkarsh-tiwari27/Vivaldi-Swift"
 $ArchiveUrl = "https://github.com/$Repo/releases/latest/download/vivaldi-swift.zip"
 
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }

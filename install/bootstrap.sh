@@ -5,7 +5,7 @@
 # Lets a first-time user install Vivaldi Swift with a single command,
 # without cloning the repository or downloading a ZIP by hand:
 #
-#   bash <(curl -fsSL https://raw.githubusercontent.com/vivaldi-swift/vivaldi-swift/main/install/bootstrap.sh)
+#   bash <(curl -fsSL https://raw.githubusercontent.com/Utkarsh-tiwari27/Vivaldi-Swift/main/install/bootstrap.sh)
 #
 # It downloads the latest GitHub Release, extracts it, runs the matching
 # platform installer (install-linux.sh or install-macos.sh), and cleans up
@@ -17,7 +17,7 @@ set -euo pipefail
 
 # Placeholder org/repo — matches the rest of the project until it's
 # published under its real GitHub location.
-REPO="vivaldi-swift/vivaldi-swift"
+REPO="Utkarsh-tiwari27/Vivaldi-Swift"
 ARCHIVE_URL="https://github.com/$REPO/releases/latest/download/vivaldi-swift.zip"
 
 info()  { echo "  $*"; }

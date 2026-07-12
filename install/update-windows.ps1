@@ -27,7 +27,7 @@ $ErrorActionPreference = "Stop"
 
 # Placeholder org/repo — matches the rest of the project until it's
 # published under its real GitHub location.
-$Repo = "vivaldi-swift/vivaldi-swift"
+$Repo = "Utkarsh-tiwari27/Vivaldi-Swift"
 $ReleaseBase = "https://github.com/$Repo/releases/latest/download"
 
 $ModDir = "$env:USERPROFILE\Vivaldi-Swift"
