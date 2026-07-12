@@ -12,13 +12,13 @@ Applied through a safe, reversible patch — one command, any platform.
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20windows-informational?style=flat-square)](#installation)
 [![Vivaldi](https://img.shields.io/badge/vivaldi-6.0%2B-orange?style=flat-square)](https://vivaldi.com/download/)
 
-**[Install](#installation) · [Preview](#preview) · [Features](#features) · [Customize](#custom-icons) · [FAQ](#faq)**
 
 </div>
 
 <br>
 
 <!-- Hero GIF -->
+
 
 <br>
 
