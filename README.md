@@ -4,13 +4,19 @@
 
 **A liquid-glass redesign for the Vivaldi browser.**
 
-Refined spacing. customizable speed dial icons ,Glass surfaces.
-
-*The browser vivaldi you already use, redrawn with intent.*
+Refined spacing, glass surfaces, and motion that feels native — through a safe, reversible patch. One command, any platform.
 
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20windows-informational?style=flat-square)](#installation)
 [![Vivaldi](https://img.shields.io/badge/vivaldi-6.0%2B-orange?style=flat-square)](https://vivaldi.com/download/)
+[![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
+<p>
+<a href="#installation">Installation</a> •
+<a href="#features">Features</a> •
+<a href="#custom-icons">Custom Icons</a> •
+<a href="#updating">Updating</a> •
+<a href="#faq">FAQ</a>
+</p>
 
 </div>
 
@@ -18,42 +24,30 @@ Refined spacing. customizable speed dial icons ,Glass surfaces.
   <img
     src="https://github.com/user-attachments/assets/6300d09f-cc61-4149-9870-3c789e883129"
     alt="Vivaldi Swift Hero"
-    width="400"
+    width="760"
   />
 </p>
 
-## Screenshots
+<br>
 
 <table align="center">
 <tr>
-<td align="center">
-
-<img
-src="https://github.com/user-attachments/assets/eb892458-3671-48e7-8064-c36609c62e05"
-alt="Vivaldi Swift Browser"
-width="500">
-
+<td align="center" width="50%">
+<img src="https://github.com/user-attachments/assets/eb892458-3671-48e7-8064-c36609c62e05" alt="Vivaldi Swift Browser UI" width="480"><br>
+<sub><b>Browser UI</b></sub>
 </td>
-
-<td align="center">
-
-<img
-src="https://github.com/user-attachments/assets/2287183f-f30b-47cc-b1fd-9af20c1f3a59"
-alt="Vivaldi Swift Speed Dial"
-width="500">
-
+<td align="center" width="50%">
+<img src="https://github.com/user-attachments/assets/2287183f-f30b-47cc-b1fd-9af20c1f3a59" alt="Vivaldi Swift Speed Dial" width="480"><br>
+<sub><b>Speed Dial</b></sub>
 </td>
-</tr>
-
-<tr>
-<td align="center"><sub>Browser UI</sub></td>
-<td align="center"><sub>Speed Dial</sub></td>
 </tr>
 </table>
 
+<br>
+
 ## Installation
 
-Requires an existing install of [Vivaldi](https://vivaldi.com/download/) (stable or snapshot), version 6.0 or later.
+Requires an existing install of [Vivaldi](https://vivaldi.com/download/) — stable or snapshot, version 6.0+.
 
 **Linux / macOS**
 
@@ -67,16 +61,15 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Utkarsh-tiwari27/Vivaldi-Swi
 irm https://raw.githubusercontent.com/Utkarsh-tiwari27/Vivaldi-Swift/main/install/bootstrap.ps1 | iex
 ```
 
-The installer detects your OS and Vivaldi install, backs up `window.html`, injects the patch, copies the icon library, and registers a background task that keeps everything reapplied after Vivaldi auto-updates. Nothing outside `~/Vivaldi-Swift/` and Vivaldi's own resource directory is touched — no telemetry, no browser extension.
+One command detects your OS and Vivaldi install, backs up `window.html`, injects the patch, copies the icon library, and schedules automatic reapplication after every Vivaldi update. Nothing outside `~/Vivaldi-Swift/` and Vivaldi's own resource directory is touched — no telemetry, no browser extension.
 
-> **One manual step remains.** Open Vivaldi and go to:
+> [!IMPORTANT]
+> One manual step remains. Open Vivaldi and go to
 > **Settings → Appearance → Custom UI Modifications → select `Vivaldi-Swift` → Restart Vivaldi**
 
 <details>
-<summary><b>Manual install, per-OS details, and flags</b></summary>
+<summary><b>Manual install & per-OS details</b></summary>
 <br>
-
-**Manual install (clone + run the platform installer)**
 
 ```bash
 # Linux
@@ -95,13 +88,17 @@ cd Vivaldi-Swift
 .\install\install-windows.ps1
 ```
 
-**Linux** — detects `.deb`/`.rpm`, and Snap installs under `/opt`. Uses `sudo` only for the file operations that touch Vivaldi's resource directory, never your home directory. Installs a systemd user timer (falls back to cron if unavailable). Skip the background task with `--no-auto-patch`; run unattended with `--yes`.
+**Linux** — detects `.deb`/`.rpm` and Snap installs under `/opt`. Uses `sudo` only for operations that touch Vivaldi's resource directory, never your home directory. Installs a systemd user timer (cron fallback). Skip it with `--no-auto-patch`; run unattended with `--yes`.
 
-**macOS** — detects `Vivaldi.app` in `/Applications`, `~/Applications`, and Homebrew's Caskroom. Works on Intel and Apple Silicon. Re-signs the app with an ad-hoc signature after patching; if Gatekeeper still flags it, run `xattr -cr "/Applications/Vivaldi.app"`. Installs a LaunchAgent. Skip it with `--no-auto-patch`.
+**macOS** — detects `Vivaldi.app` in `/Applications`, `~/Applications`, and Homebrew's Caskroom. Works on Intel and Apple Silicon. Re-signs the app with an ad-hoc signature after patching; if Gatekeeper still flags it, run `xattr -cr "/Applications/Vivaldi.app"`. Installs a LaunchAgent, skippable with `--no-auto-patch`.
 
-**Windows** — detects Vivaldi under `Program Files`, `Program Files (x86)`, and the per-user `%LocalAppData%\Vivaldi` path. Portable installs: point the patch engine at an explicit path with `-InstallDir`. Installs a Task Scheduler task. Skip it with `-NoAutoPatch`. If script execution is disabled, run `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` first.
+**Windows** — detects Vivaldi under `Program Files`, `Program Files (x86)`, and `%LocalAppData%\Vivaldi`. Portable installs: point the patch engine at an explicit path with `-InstallDir`. Installs a Task Scheduler task, skippable with `-NoAutoPatch`. If script execution is disabled: `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`.
 
-**Uninstalling**
+</details>
+
+<details>
+<summary><b>Uninstalling</b></summary>
+<br>
 
 ```bash
 ./install/uninstall-linux.sh     # or uninstall-macos.sh
@@ -121,11 +118,9 @@ Restores your most recent `window.html` backup and removes the background task. 
 
 |  |  |
 |---|---|
-| **Glass surfaces, everywhere**<br>Toolbar, address bar, dropdowns, Speed Dial, side panel, and tab bar each get a dedicated glass module — not one filter over the whole UI. | **One-line installation**<br>No cloning, no manual downloads. A single command detects your OS, fetches the latest release, and installs everything. |
-| **Custom Speed Dial icons**<br>Right-click any tile to upload your own SVG or PNG, reposition and resize it live, or reset it to the site favicon. | **Automatic patching**<br>Vivaldi updates overwrite `window.html`. A scheduled background task reapplies the patch automatically — usually within hours, or immediately at next login. |
-| **Cross-platform**<br>One patch engine, three native implementations — Linux, macOS, and Windows all get first-class installers, uninstallers, and updaters. | **Safe by construction**<br>Every patch run backs up `window.html` first and verifies the result. If anything looks wrong, it rolls back automatically. |
-
-Also included: an in-app icon library (toolbar, sidebar, and social sets) and a self-updater that checks `version.json` before downloading anything.
+| **Glass surfaces, everywhere**<br>Toolbar, address bar, dropdowns, Speed Dial, side panel, and tab bar each get a dedicated glass module — not one filter over the whole UI. | **One-line installation**<br>No cloning, no manual downloads. A single command detects your OS and installs everything. |
+| **Custom Speed Dial icons**<br>Upload your own SVG or PNG per tile, reposition and resize it live, or reset it to the site favicon. | **Automatic patching**<br>Vivaldi updates overwrite `window.html`. A scheduled background task reapplies the patch on its own. |
+| **Cross-platform**<br>One patch engine, three native implementations — Linux, macOS, and Windows all get first-class tooling. | **Safe by construction**<br>Every patch run backs up `window.html` and verifies the result, rolling back automatically if anything's off. |
 
 <br>
 
@@ -133,10 +128,11 @@ Also included: an in-app icon library (toolbar, sidebar, and social sets) and a 
 
 Right-click any Speed Dial tile → **Change Icon** to upload your own artwork, reposition and resize it, or reset it to the site favicon.
 
-- **Formats:** SVG (preferred — scales cleanly, sanitized and ID-namespaced automatically) or PNG (transparent background, exported at 2×–3× target size).
-- **Recommended size:** design at 64×64 or 128×128; the layout system scales it down per tile.
-- **Folders:** `icons/toolbar/`, `icons/sidebar/`, `icons/social/`, `icons/custom/`.
-- **Good sources:** [thesvg.org](https://thesvg.org/), [Heroicons](https://heroicons.com/), [Lucide](https://lucide.dev/), [Tabler Icons](https://tabler.io/icons) — always verify the license before committing icons to a repository.
+- **Format** — SVG preferred (sanitized and ID-namespaced automatically), or PNG with a transparent background.
+- **Size** — design at 64×64 or 128×128; the layout system scales it per tile.
+- **Folders** — `icons/toolbar/`, `icons/sidebar/`, `icons/social/`, `icons/custom/`.
+
+Good sources: [thesvg.org](https://thesvg.org/) · [Heroicons](https://heroicons.com/) · [Lucide](https://lucide.dev/) · [Tabler Icons](https://tabler.io/icons) — verify the license before committing icons to a repo.
 
 <br>
 
@@ -144,7 +140,7 @@ Right-click any Speed Dial tile → **Change Icon** to upload your own artwork, 
 
 Vivaldi Swift updates on two independent fronts:
 
-- **Vivaldi updates itself** → the background task reapplies the patch automatically, since Vivaldi overwrites `window.html` on every update.
+- **Vivaldi updates itself** → the background task reapplies the patch automatically.
 - **Vivaldi Swift releases a new version** → run the self-updater:
 
 ```bash
@@ -155,17 +151,29 @@ Vivaldi Swift updates on two independent fronts:
 & "$env:USERPROFILE\Vivaldi-Swift\bin\update-windows.ps1"
 ```
 
-It checks the latest release's `version.json` against your installed version and exits immediately if you're already current — otherwise it replaces the CSS, JS, and patch engine, then reapplies the patch. Icons, logs, backups, and local overrides are never touched.
+> [!NOTE]
+> The updater checks `version.json` first and exits immediately if you're already current — icons, logs, backups, and local overrides are never touched.
 
 <br>
 
 ## Roadmap
 
-**Shipped** — cross-platform installers, uninstallers, and self-updaters · per-OS patch engines with backup, verification, and rollback · scheduled automatic patch reapplication · Speed Dial custom icon system · one-line bootstrap installers.
+**✅ Completed**
+- Cross-platform installers, uninstallers, and self-updaters
+- Per-OS patch engines with backup, verification, and rollback
+- Scheduled automatic patch reapplication
+- Speed Dial custom icon system
+- One-line bootstrap installers
 
-**In progress** — broader screenshot and preview coverage · community-contributed icon sets.
+**🚧 In Progress**
+- Broader screenshot and preview coverage
+- Community-contributed icon sets
 
-**Planned** — theme presets · dynamic accent colors · wallpaper-aware color extraction · plugin API.
+**💡 Planned**
+- Theme presets
+- Dynamic accent colors
+- Wallpaper-aware color extraction
+- Plugin API
 
 <br>
 
@@ -173,7 +181,7 @@ It checks the latest release's `version.json` against your installed version and
 
 <details>
 <summary>Is Vivaldi Swift an official Vivaldi project?</summary><br>
-No. It's an independent community project, not affiliated with or endorsed by Vivaldi Technologies AS.
+No — it's an independent community project, not affiliated with or endorsed by Vivaldi Technologies AS.
 </details>
 
 <details>
@@ -183,22 +191,22 @@ Yes. It only patches Vivaldi's UI files, creates automatic backups, and can be f
 
 <details>
 <summary>Will Vivaldi updates break it?</summary><br>
-No. The patch service reapplies itself automatically after browser updates.
+No — the patch service reapplies itself automatically after browser updates.
 </details>
 
 <details>
 <summary>Does it work on Vivaldi Snapshot?</summary><br>
-Yes. Both Stable and Snapshot builds are supported.
+Yes, both Stable and Snapshot builds are supported.
 </details>
 
 <details>
 <summary>Can I use only the CSS or only the JavaScript?</summary><br>
-Yes. Both components work independently for a manual setup.
+Yes, both components work independently for a manual setup.
 </details>
 
 <details>
 <summary>Does it affect browser performance?</summary><br>
-No noticeable impact. The CSS and JavaScript are lightweight by design.
+No noticeable impact — the CSS and JavaScript are lightweight by design.
 </details>
 
 <details>
@@ -217,7 +225,7 @@ Install Vivaldi first, or specify its installation path manually.
 
 <details>
 <summary>Permission denied</summary><br>
-Run the installer with administrator privileges (<code>sudo</code> or Administrator PowerShell).
+Run the installer with elevated privileges (<code>sudo</code> or Administrator PowerShell).
 </details>
 
 <details>
@@ -227,7 +235,7 @@ Restart Vivaldi completely. If it still doesn't apply, rerun the patch script.
 
 <details>
 <summary>The UI disappeared after a Vivaldi update</summary><br>
-Expected — the auto-patcher restores it automatically, or you can run the patch script manually.
+Expected — the auto-patcher restores it shortly, or run the patch script manually.
 </details>
 
 <details>
