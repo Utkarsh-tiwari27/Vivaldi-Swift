@@ -9,8 +9,6 @@ Applied through a safe, reversible patch — one command, any platform.
 
 *The browser chrome you already use, redrawn with intent.*
 
-[![Release](https://img.shields.io/github/v/release/Utkarsh-tiwari27/Vivaldi-Swift?style=flat-square)](https://github.com/Utkarsh-tiwari27/Vivaldi-Swift/releases)
-[![License](https://img.shields.io/github/license/Utkarsh-tiwari27/Vivaldi-Swift?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20windows-informational?style=flat-square)](#installation)
 [![Vivaldi](https://img.shields.io/badge/vivaldi-6.0%2B-orange?style=flat-square)](https://vivaldi.com/download/)
 
