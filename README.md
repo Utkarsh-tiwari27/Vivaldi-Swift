@@ -83,6 +83,18 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Utkarsh-tiwari27/Vivaldi-Swi
 > 4. Under **Custom UI Modifications**, select the **Vivaldi-Swift** folder created after installtion in your home directory.
 > 5. Restart Vivaldi.
 
+
+### Step 3 - Custom Icons
+
+To set custom icons on speed dial card
+
+Right-click any Speed Dial tile → **Change Icon** to upload your own icon.
+
+- **Format** — SVG preferred (sanitized and ID-namespaced automatically), or PNG 
+
+Good sources: [thesvg.org](https://thesvg.org/) · [Heroicons](https://heroicons.com/) · [Lucide](https://lucide.dev/) · [Tabler Icons](https://tabler.io/icons) — verify the license before committing icons to a repo.
+
+<br>
 ---
 
 ### 🛠️ Manual Installation
@@ -188,17 +200,7 @@ The uninstaller restores the latest backup, removes the automatic patch task, an
 | **Glass surfaces, everywhere**<br>Toolbar, address bar, dropdowns, Speed Dial, side panel, and tab bar each get a dedicated glass module — not one filter over the whole UI. **Custom Speed Dial icons**<br>Upload your own SVG or PNG per tile, reposition and resize it live, or reset it to the site favicon. |
 <br>
 
-## Custom Icons
 
-Right-click any Speed Dial tile → **Change Icon** to upload your own artwork, reposition and resize it, or reset it to the site favicon.
-
-- **Format** — SVG preferred (sanitized and ID-namespaced automatically), or PNG with a transparent background.
-- **Size** — design at 64×64 or 128×128; the layout system scales it per tile.
-- **Folders** — `icons/toolbar/`, `icons/sidebar/`, `icons/social/`, `icons/custom/`.
-
-Good sources: [thesvg.org](https://thesvg.org/) · [Heroicons](https://heroicons.com/) · [Lucide](https://lucide.dev/) · [Tabler Icons](https://tabler.io/icons) — verify the license before committing icons to a repo.
-
-<br>
 
 ## Updating
 
