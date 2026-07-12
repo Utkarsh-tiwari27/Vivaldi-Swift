@@ -88,7 +88,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Utkarsh-tiwari27/Vivaldi-Swi
 
 To set custom icons on speed dial card
 
-Right-click any Speed Dial tile → **Change Icon** to upload your own icon.
+Right-click any Speed Dial card → **Change Icon** to upload your own icon.
 
 - **Format** — SVG preferred (sanitized and ID-namespaced automatically), or PNG 
 
