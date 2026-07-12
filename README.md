@@ -38,7 +38,7 @@ Refined spacing, glass surfaces and custom high quality speed dial icons.
 </td>
 <td align="center" width="50%">
 <img src="https://github.com/user-attachments/assets/2287183f-f30b-47cc-b1fd-9af20c1f3a59" alt="Vivaldi Swift Speed Dial" width="480"><br>
-<sub><b>Speed Dial</b></sub>
+<sub><b> Custom Speed Dial icon</b></sub>
 </td>
 </tr>
 </table>
