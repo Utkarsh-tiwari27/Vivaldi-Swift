@@ -185,10 +185,7 @@ The uninstaller restores the latest backup, removes the automatic patch task, an
 
 |  |  |
 |---|---|
-| **Glass surfaces, everywhere**<br>Toolbar, address bar, dropdowns, Speed Dial, side panel, and tab bar each get a dedicated glass module — not one filter over the whole UI. | **One-line installation**<br>No cloning, no manual downloads. A single command detects your OS and installs everything. |
-| **Custom Speed Dial icons**<br>Upload your own SVG or PNG per tile, reposition and resize it live, or reset it to the site favicon. | **Automatic patching**<br>Vivaldi updates overwrite `window.html`. A scheduled background task reapplies the patch on its own. |
-| **Cross-platform**<br>One patch engine, three native implementations — Linux, macOS, and Windows all get first-class tooling. | **Safe by construction**<br>Every patch run backs up `window.html` and verifies the result, rolling back automatically if anything's off. |
-
+| **Glass surfaces, everywhere**<br>Toolbar, address bar, dropdowns, Speed Dial, side panel, and tab bar each get a dedicated glass module — not one filter over the whole UI. **Custom Speed Dial icons**<br>Upload your own SVG or PNG per tile, reposition and resize it live, or reset it to the site favicon. |
 <br>
 
 ## Custom Icons
