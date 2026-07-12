@@ -35,7 +35,7 @@ Applied through a safe, reversible patch — one command, any platform.
   <img
     src="https://github.com/user-attachments/assets/eb892458-3671-48e7-8064-c36609c62e05"
     alt="Vivaldi Swift browser screenshot"
-    width="1080"
+    width="800"
   />
 </p>
 
