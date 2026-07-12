@@ -19,6 +19,8 @@ Applied through a safe, reversible patch — one command, any platform.
 
 <!-- Hero GIF -->
 <img width="400" height="230" alt="hero-ezgif com-optimize" src="https://github.com/user-attachments/assets/2e8271cd-0f0c-45c7-864a-c1bdc56f0834" />
+<img width="400" height="230" alt="hero_v2-ezgif com-optimize" src="https://github.com/user-attachments/assets/375694f9-216c-4768-9ad2-b2e6a7cb74dc" />
+
 
 
 <br>
