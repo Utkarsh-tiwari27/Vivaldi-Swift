@@ -92,7 +92,7 @@ Right-click any Speed Dial card → **Change Icon** to upload your own icon.
 
 - **Format** — SVG preferred (sanitized and ID-namespaced automatically), or PNG 
 
-Good sources: [thesvg.org](https://thesvg.org/) · [Heroicons](https://heroicons.com/) · [Lucide](https://lucide.dev/) · [Tabler Icons](https://tabler.io/icons) — verify the license before committing icons to a repo.
+you can get high quality SVG icons from: [thesvg.org](https://thesvg.org/) 
 
 <br>
 ---
