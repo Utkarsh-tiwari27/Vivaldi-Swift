@@ -276,6 +276,114 @@ Full detail: **[docs/update-system.md](docs/update-system.md)**.
 - Plugin API
 
 
+## Troubleshooting
+
+<details>
+<summary><strong>Vivaldi wasn't detected</strong></summary>
+
+Install Vivaldi first or specify its installation path manually.
+
+</details>
+
+<details>
+<summary><strong>Permission denied</strong></summary>
+
+Run the installer with administrator privileges (`sudo` or Administrator PowerShell).
+
+</details>
+
+<details>
+<summary><strong>Nothing changed after installing</strong></summary>
+
+Restart Vivaldi completely. If needed, rerun the patch script.
+
+</details>
+
+<details>
+<summary><strong>The UI disappeared after an update</strong></summary>
+
+This is expected. The auto-patcher will restore it, or you can run the patch script manually.
+
+</details>
+
+<details>
+<summary><strong>Custom icons aren't showing</strong></summary>
+
+Restart Vivaldi or reset the affected icon.
+
+</details>
+
+<details>
+<summary><strong>How do I uninstall Vivaldi Swift?</strong></summary>
+
+Run the uninstall script for your operating system to restore the original UI.
+
+</details>
+
+<details>
+<summary><strong>Still having issues?</strong></summary>
+Please open a GitHub Issue with your OS, Vivaldi version, and a brief description of the problem.
+
+</details>
+
+## FAQ
+
+<details>
+<summary><strong>Is Vivaldi Swift an official Vivaldi project?</strong></summary>
+
+No. Vivaldi Swift is an independent community project and is not affiliated with or endorsed by Vivaldi Technologies AS.
+
+</details>
+
+<details>
+<summary><strong>Is it safe to use?</strong></summary>
+
+Yes. It only patches Vivaldi's UI files, creates automatic backups, and can be completely removed using the uninstall script.
+
+</details>
+
+<details>
+<summary><strong>Will Vivaldi updates break it?</strong></summary>
+
+No. The patch is automatically reapplied after browser updates by the installed patch service.
+
+</details>
+
+<details>
+<summary><strong>Does it work on Vivaldi Snapshot?</strong></summary>
+
+Yes. Both Stable and Snapshot builds are supported.
+
+</details>
+
+<details>
+<summary><strong>Can I use only the CSS or only the JavaScript?</strong></summary>
+
+Yes. Both components can be used independently if you prefer a manual setup.
+
+</details>
+
+<details>
+<summary><strong>Does it affect browser performance?</strong></summary>
+
+No noticeable impact. The CSS and JavaScript are lightweight and designed to keep UI overhead minimal.
+
+</details>
+
+<details>
+<summary><strong>Can I customize it further?</strong></summary>
+
+Absolutely. The stylesheet is modular, and you can easily modify colors, spacing, blur, or add your own custom icons.
+
+</details>
+
+<details>
+<summary><strong>Where can I report bugs or request features?</strong></summary>
+
+Open a GitHub Issue with as much detail as possible, including your operating system, Vivaldi version, and screenshots if applicable.
+
+</details>
+
 ## License
 
 Released under the [MIT License](LICENSE).
