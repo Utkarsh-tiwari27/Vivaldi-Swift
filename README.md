@@ -45,6 +45,10 @@ Refined spacing, glass surfaces and custom high quality speed dial icons.
 
 <br>
 
+## Overview
+
+This custom css and js mod transforms your vivaldi browser ui into liquid glass design along with an additional feature of letting users to set high quality custom icons for their speed dial cards.
+
 ## Installation
 
 ### 🚀 Automatic (Recommended)
