@@ -53,7 +53,8 @@ This custom css and js mod transforms your vivaldi browser ui into liquid glass 
 
 ### 🚀 Automatic (Recommended)
 
-Simply copy the command for based on your  operating system, paste it into your terminal, and press **Enter**.
+### Step 1
+Simply copy the command based on your  operating system, paste it into your terminal, and press **Enter**.
 
 The installer will automatically set everything up.
 
