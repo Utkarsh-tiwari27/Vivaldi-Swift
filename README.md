@@ -18,6 +18,7 @@ Applied through a safe, reversible patch — one command, any platform.
 <br>
 
 <!-- Hero GIF -->
+<img width="800" height="600" alt="hero" src="https://github.com/user-attachments/assets/80bcb664-f93d-45f2-885d-4864741da6e2" />
 
 
 <br>
@@ -25,9 +26,7 @@ Applied through a safe, reversible patch — one command, any platform.
 ## Preview
 
 <!-- Browser Screenshot -->
-<!-- Toolbar Screenshot -->
-<!-- Sidebar Screenshot -->
-<!-- Speed Dial Screenshot -->
+
 
 <br>
 
