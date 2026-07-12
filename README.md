@@ -4,10 +4,9 @@
 
 **A liquid-glass redesign for the Vivaldi browser.**
 
-Refined spacing. Glass surfaces. Motion that feels native.
-Applied through a safe, reversible patch — one command, any platform.
+Refined spacing. customizable speed dial icons ,Glass surfaces.
 
-*The browser chrome you already use, redrawn with intent.*
+*The browser vivaldi you already use, redrawn with intent.*
 
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20windows-informational?style=flat-square)](#installation)
 [![Vivaldi](https://img.shields.io/badge/vivaldi-6.0%2B-orange?style=flat-square)](https://vivaldi.com/download/)
