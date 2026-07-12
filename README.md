@@ -217,9 +217,6 @@ vivaldi-swift/
 | [Update System](docs/update-system.md) | How automatic reapplication works, manual reapplication, the self-updater |
 | [Troubleshooting](docs/troubleshooting.md) | Common install/patch problems, organized by symptom |
 | [FAQ](docs/faq.md) | Safety, performance, snapshot builds, and other common questions |
-| [Contributing](CONTRIBUTING.md) | Project layout, development setup, how to submit changes |
-| [Security](SECURITY.md) | Reporting a vulnerability |
-| [Code of Conduct](CODE_OF_CONDUCT.md) | Community expectations |
 | [License](LICENSE) | MIT |
 
 <br>
@@ -278,13 +275,6 @@ Full detail: **[docs/update-system.md](docs/update-system.md)**.
 - Wallpaper-aware color extraction
 - Plugin API
 
-<br>
-
-## Contributing
-
-Contributions are welcome — bug reports, icon sets, documentation fixes, and CSS/JS improvements alike. Start with **[CONTRIBUTING.md](CONTRIBUTING.md)** for project layout and development setup, and check open [issues](../../issues) before starting on something larger.
-
-<br>
 
 ## License
 
